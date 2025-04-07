@@ -22,10 +22,7 @@ void	Pass::parse()
 	int	ac = 0;
 
 	while (args[ac])
-	{
-		std::cout << ac << args[ac] << std::endl;
 		ac++;
-	}
 
 	if (ac == 1)
 		respVal = 461;
