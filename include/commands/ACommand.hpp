@@ -5,6 +5,7 @@
 # include <stdlib.h>
 
 # define NORESP -1
+# define RESP 0
 
 class Server;
 
@@ -14,10 +15,11 @@ class ACommand
 		Server	&server;
 		Client	&client;
 		char	**args;
+		int		ac;
 		int		respVal;
 	
 	public:
-		ACommand(Server &server, Client &client, char **args);
+		ACommand(Server &server, Client &client, char **args, int ac);
 		virtual ~ACommand();
 
 		virtual void	parse() = 0;

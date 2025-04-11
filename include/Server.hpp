@@ -3,9 +3,10 @@
 # include "Monitor.hpp"
 # include "ClientList.hpp"
 # include "commands/ACommand.hpp"
+# include "Channel.hpp"
 # include <vector>
 
-# define CMDS_N 1
+# define CMDS_N 4
 
 class ACommand;
 
@@ -16,8 +17,9 @@ class Server
 		std::string	passwd;
         Monitor     monitor;
         ClientList  clients;
+		std::vector<Channel*> channels;
         std::string	cmdNames[CMDS_N];
-        ACommand    *(*cmdFactory[CMDS_N])(Server &server, Client &client, char **args);
+        ACommand    *(*cmdFactory[CMDS_N])(Server &server, Client &client, char **args, int ac);
 
     public:
         Server();
@@ -31,6 +33,10 @@ class Server
 		void	handleClientInReady(Client &client);
 		void	handleClientOutReady(Client &client);
         void    procCmds(Client &client);
+		// channel managment
+		Channel* getChannel(const std::string& name);
+		void addChannel(const std::string& name, Channel* channel);
+		void removeChannel(const std::string& name, Channel* channel);
 };
 
 #endif

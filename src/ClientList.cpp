@@ -4,19 +4,19 @@
 
 ClientList::ClientList()
 {
-	std::cout << "ClientList's Default Constructor called\n";
+	// std::cout << "ClientList's Default Constructor called\n";
 }
 
 ClientList::ClientList(const ClientList &other) 
 {
-	std::cout << "ClientList's Copy Constructor called\n";
+	// std::cout << "ClientList's Copy Constructor called\n";
 
 	*this = other;
 }
 
 ClientList::~ClientList() 
 {
-	std::cout << "ClientList's Destructor called\n";
+	// std::cout << "ClientList's Destructor called\n";
 
 	for (std::size_t i = 0; i < lst.size(); i++)
 		close(lst[i].getSockfd());

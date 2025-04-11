@@ -7,6 +7,7 @@ class Client
 {
 	private:
 		int					sockfd;
+		std::string			nickname;
 		std::stringstream	rdbuf;
 		std::stringstream	wrbuf;
 	public:
@@ -25,6 +26,9 @@ class Client
 		bool				readyToSend();
 
 		friend std::ostream	&operator << (std::ostream &os, Client &client);
+
+		// ####
+		std::string& getNickname();
 };
 
 #endif

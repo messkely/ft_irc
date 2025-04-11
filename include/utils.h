@@ -3,6 +3,7 @@
 # include <string>
 
 char	**split(const char *str, char sep);
+int		countWrds(const char *str, char sep);
 int		foundWrd(std::string str, std::string word);
 
 #endif

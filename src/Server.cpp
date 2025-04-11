@@ -3,6 +3,9 @@
 #include "../include/utils.h"
 #include "../include/servSock.h"
 #include "../include/commands/Pass.hpp"
+#include "../include/commands/Join.hpp"
+#include "../include/commands/Mode.hpp"
+#include "../include/commands/Part.hpp"
 #include "../include/utils.h"
 #include <iostream>
 #include <unistd.h>
@@ -16,18 +19,18 @@ using namespace std;
 
 Server::Server()
 {
-	std::cout << "Server's Default Constructor called\n";
+	// std::cout << "Server's Default Constructor called\n";
 }
 
 Server::Server(const char *port, const char *passwd) 
 	: servSock(getServSock(port)), passwd(passwd)
 {
-	std::cout << "Server's Parametrized Constructor called\n";
+	// std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {"PASS"}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {"PASS", "JOIN", "MODE", "PART"}; // add command names here
 
-	ACommand	*(*tmpCmdFactory[CMDS_N])(Server &server, Client &client, char **args)
-	= {Pass::create}; // add facatory methods here
+	ACommand	*(*tmpCmdFactory[CMDS_N])(Server &server, Client &client, char **args, int ac)
+	= {Pass::create,  Join::create, Mode::create, Part::create}; // add facatory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{
@@ -38,14 +41,14 @@ Server::Server(const char *port, const char *passwd)
 
 Server::Server(const Server &other) 
 {
-	std::cout << "Server's Copy Constructor called\n";
+	// std::cout << "Server's Copy Constructor called\n";
 
 	*this = other;
 }
 
 Server::~Server() 
 {
-	std::cout << "Server's Destructor called\n";
+	// std::cout << "Server's Destructor called\n";
 
 	close(servSock);
 }
@@ -143,7 +146,7 @@ void	Server::procCmds(Client &client)
 		{
 			if (foundWrd(line, cmdNames[i])) // command [name and factoryMethod] share same index
 			{
-				cmd = cmdFactory[i](*this, client, split(line.c_str(), ' ')); // cmdFactory[indexOfFactoryMethod](argsList)
+				cmd = cmdFactory[i](*this, client, split(line.c_str(), ' '), countWrds(line.c_str(), ' ')); // cmdFactory[indexOfFactoryMethod](argsList)
 
 				cmd->parse();
 				cmd->execute();
@@ -157,3 +160,38 @@ void	Server::procCmds(Client &client)
 		client >> line;
 	}
 }
+
+// channels managment
+Channel	*Server::getChannel(const std::string& name)
+{
+	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->getName() == name)
+			return *it;
+	}
+	return (NULL);
+}
+
+void Server::addChannel(const std::string& name, Channel* channel)
+{
+	if (!getChannel(name))
+		channels.push_back(channel);
+}
+
+void Server::removeChannel(const std::string& name, Channel* channel)
+{
+	if (!getChannel(name))
+	{
+    	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+    	{
+    	    if (*it == channel)
+    	    {
+    	        delete *it;
+    	        channels.erase(it);
+    	        break;
+    	    }
+    	}
+	}
+}
+
+
