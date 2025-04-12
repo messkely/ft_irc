@@ -6,7 +6,7 @@
 # include "Channel.hpp"
 # include <vector>
 
-# define CMDS_N 4
+# define CMDS_N 5
 
 class ACommand;
 

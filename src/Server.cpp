@@ -6,6 +6,7 @@
 #include "../include/commands/Join.hpp"
 #include "../include/commands/Mode.hpp"
 #include "../include/commands/Part.hpp"
+#include "../include/commands/Topic.hpp"
 #include "../include/utils.h"
 #include <iostream>
 #include <unistd.h>
@@ -27,10 +28,10 @@ Server::Server(const char *port, const char *passwd)
 {
 	// std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {"PASS", "JOIN", "MODE", "PART"}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {"PASS", "JOIN", "MODE", "PART", "TOPIC"}; // add command names here
 
 	ACommand	*(*tmpCmdFactory[CMDS_N])(Server &server, Client &client, char **args, int ac)
-	= {Pass::create,  Join::create, Mode::create, Part::create}; // add facatory methods here
+	= {Pass::create,  Join::create, Mode::create, Part::create, Topic::create}; // add facatory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{

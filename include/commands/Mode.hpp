@@ -6,28 +6,35 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/08 11:42:17 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/10 08:56:42 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/12 18:40:15 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef Mode_HPP
-# define Mode_HPP
+#ifndef MODE_HPP
+# define MODE_HPP
 
-#define CHANNEL_NAME 1
-#define OPTION 2
-#define OPTION_ARG 3
-#define OPTIONS_N 5
-
-#include "ACommand.hpp"
-#include "../Channel.hpp"
-#include <cstdlib>
+# include "ACommand.hpp"
+# include "../Channel.hpp"
+# include <cstdlib>
+# include <vector>
+# include <string>
 
 class Mode : public ACommand
 {
+	struct ModeChange
+	{
+		char sign;
+		char mode;
+		std::string param;
+
+		ModeChange(char s, char m, const std::string &p)
+			: sign(s), mode(m), param(p) {}
+	};
+
 	private:
 		std::string	channelName;
-		std::string	option;
-		std::string option_arg;
+		std::vector<ModeChange> modeChanges;
+
 	public:
 		Mode(Server &server, Client &client, char **args, int ac);
 		virtual ~Mode();
@@ -38,8 +45,7 @@ class Mode : public ACommand
 
 		static ACommand	*create(Server &server, Client &client, char **args, int ac);
 		
-		// Mode management
-		bool isOption(std::string option);
+		bool isValidMode(char modeLetter);
 		void isInvitOnly(Channel *channel, std::string option, std::string option_arg);
 		void isTopicLocked(Channel *channel, std::string option, std::string option_arg);
 		void isPassword(Channel *channel, std::string option, std::string option_arg);

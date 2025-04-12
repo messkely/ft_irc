@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 11:41:00 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/10 16:24:10 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/11 18:41:14 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
 class Topic : public ACommand
 {
 	private:
-		Channel* channel;
+		std::vector<std::string> channelNames;
 		std::string topic;
 	public:
 		Topic(Server &server, Client &client, char **args, int ac);

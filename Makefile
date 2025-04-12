@@ -4,13 +4,13 @@ FLAGS	= -Werror -Wall -Wextra -std=c++98
 
 HEADERS	= include/Server.hpp include/Client.hpp include/ClientList.hpp include/Monitor.hpp \
 		  include/commands/ACommand.hpp include/commands/Pass.hpp include/commands/Join.hpp \
-		  include/commands/Mode.hpp include/commands/Part.hpp include/error.h include/parse.h \
-		  include/servSock.h include/utils.h include/Channel.hpp
+		  include/commands/Mode.hpp include/commands/Part.hpp include/commands/Part.hpp \
+		  include/error.h include/parse.h include/servSock.h include/utils.h include/Channel.hpp
 
 SRCS	= src/main.cpp src/Server.cpp src/Monitor.cpp src/Client.cpp src/ClientList.cpp \
 		  src/commands/ACommand.cpp src/userInpParse.cpp src/error.cpp src/split.cpp src/commands/Pass.cpp \
-		  src/commands/Mode.cpp src/commands/Part.cpp src/servSockGen.cpp src/utils.cpp src/commands/Join.cpp \
-		  src/Channel.cpp
+		  src/commands/Mode.cpp src/commands/Part.cpp src/commands/Topic.cpp src/servSockGen.cpp \
+		  src/utils.cpp src/commands/Join.cpp src/Channel.cpp
 
 OBJS	= $(SRCS:.cpp=.o)
 

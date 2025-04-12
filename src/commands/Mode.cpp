@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/08 11:45:47 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/10 09:44:31 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/12 17:16:13 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,64 +14,100 @@
 
 Mode::Mode(Server &server, Client &client, char **args, int ac)
 	: ACommand(server, client, args, ac)
-{}
+{
+}
 
 Mode::~Mode() {}
 
 void Mode::parse()
 {
-	if ((ac != 3 && ac != 4) || !args || !args[1] || !args[2])
+	if (ac < 2 || !args || !args[1] || !args[2])
 	{
 		respVal = NORESP;
 		return;
 	}
 
-	channelName = args[CHANNEL_NAME];
-	option = args[OPTION];
-	option_arg = (ac == 4) ? args[OPTION_ARG] : "";
-	// parse the channel name
-	if (channelName[0] != '#' 
-	|| channelName.find(" ") != std::string::npos
-	|| channelName.length() <= 1)
-	{
-		respVal = NORESP;
-		return;
-	}
-	// parse the option of the channel
-	if (!isOption(option))
-	{
-		respVal = NORESP;
-		return;
-	}
-	// parse the option's argument of the channel if it is.
-	
-	if ((option[1] == 'k' || option[1] == 'l' || option[1] == 'o') && option_arg.empty())
+	channelName = args[1];
+	std::string modeArg = args[2];
+
+	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
 	{
 		respVal = NORESP;
 		return;
 	}
 
+	if (modeArg.empty() || (modeArg[0] != '+' && modeArg[0] != '-'))
+	{
+		respVal = NORESP;
+		return;
+	}
+	int paramIndex = 3;
+	char currentSign = modeArg[0];
+
+	for (size_t i = 1; i < modeArg.size(); i++)
+	{
+		char ch = modeArg[i];
+		if (ch == '+' || ch == '-')
+		{
+			currentSign = ch;
+			continue;
+		}
+		if (!isValidMode(ch))
+		{
+			respVal = NORESP;
+			return;
+		}
+		std::string mparam = "";
+		// For modes that require a parameter: k, l, or o.
+		if (ch == 'k' || ch == 'l' || ch == 'o')
+		{
+			if (paramIndex >= ac || !args[paramIndex])
+			{
+				respVal = NORESP;
+				return;
+			}
+			mparam = args[paramIndex];
+			paramIndex++;
+		}
+		modeChanges.push_back(ModeChange(currentSign, ch, mparam));
+	}
 	respVal = RESP;
 }
 
 void Mode::execute()
 {
-	Channel *channel;
-	std::string setOptions[OPTIONS_N] = {"+i", "+t", "+k", "+o", "+l"};
-	std::string rmOptions[OPTIONS_N] = {"-i", "-t", "-k", "-o", "-l"};
-	void (Mode::*optionsInventory[5])(Channel *channel, std::string option, std::string option_arg) = 
-	{&Mode::isInvitOnly, &Mode::isTopicLocked, &Mode::isPassword,
-	&Mode::isAssignPrivileges, &Mode::isUserLimit};
-	
-	if (respVal != 0)
+	if (respVal != RESP)
 		return;
-	channel = server.getChannel(channelName);
-	if (channel)
+
+	Channel *channel = server.getChannel(channelName);
+	if (!channel)
+		return;
+	for (size_t i = 0; i < modeChanges.size(); i++)
 	{
-		for (int i = 0; i < OPTIONS_N; i++)
+		ModeChange mc = modeChanges[i];
+		std::string modeOpt;
+		modeOpt.push_back(mc.sign);
+		modeOpt.push_back(mc.mode);
+
+		switch (mc.mode)
 		{
-			if (option == setOptions[i] || option == rmOptions[i])
-				(this->*optionsInventory[i])(channel, option, option_arg);
+		case 'i':
+			isInvitOnly(channel, modeOpt, mc.param);
+			break;
+		case 't':
+			isTopicLocked(channel, modeOpt, mc.param);
+			break;
+		case 'k':
+			isPassword(channel, modeOpt, mc.param);
+			break;
+		case 'o':
+			isAssignPrivileges(channel, modeOpt, mc.param);
+			break;
+		case 'l':
+			isUserLimit(channel, modeOpt, mc.param);
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -86,20 +122,10 @@ ACommand *Mode::create(Server &server, Client &client, char **args, int ac)
 	return (new Mode(server, client, args, ac));
 }
 
-bool	Mode::isOption(std::string option)
+bool Mode::isValidMode(char modeLetter)
 {
-	std::string setOptions[OPTIONS_N] = {"+i", "+t", "+k", "+o", "+l"};
-	std::string rmOptions[OPTIONS_N] = {"-i", "-t", "-k", "-o", "-l"};
-
-	if (option.length() != 2 || (option[0] != '-' && option[0] != '+'))
-		return (false);
-	
-	for (int i = 0; i < OPTIONS_N; i++)
-	{
-		if (option == setOptions[i] || option == rmOptions[i])
-			return (true);
-	}
-	return (false);
+	return (modeLetter == 'i' || modeLetter == 't' ||
+			modeLetter == 'k' || modeLetter == 'o' || modeLetter == 'l');
 }
 
 void Mode::isInvitOnly(Channel *channel, std::string option, std::string option_arg)
@@ -139,7 +165,7 @@ void Mode::isAssignPrivileges(Channel *channel, std::string option, std::string 
 		else
 			channel->changeUserToOp(channel->findOperator(option_arg));
 	}
-	catch(const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cerr << e.what() << '\n';
 	}
@@ -151,7 +177,7 @@ void Mode::isUserLimit(Channel *channel, std::string option, std::string option_
 	if (!limit)
 	{
 		respVal = NORESP;
-		return ;
+		return;
 	}
 	if (option[0] == '-')
 		channel->removeUserLimit();
