@@ -1,8 +1,9 @@
-#include "../../include/commands/Nick.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 #include <iostream>
 
-Nick::Nick(Server &server, Client &client, char **args)
-	: ACommand(NICK, server, client, args)
+Nick::Nick(Server &server, Client &client, char **args, int argc)
+	: ACommand(NICK, server, client, args, argc)
 {
 	std::cout << "Nick's Paramterized Constructor called\n";
 }
@@ -28,7 +29,7 @@ void	Nick::resp()
 }
 
 
-ACommand	*Nick::create(Server &server, Client &client, char **args)
+ACommand	*Nick::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Nick(server, client, args));
+	return (new Nick(server, client, args, argc));
 }

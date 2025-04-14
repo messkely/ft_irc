@@ -2,8 +2,6 @@
 #include "../include/error.h"
 #include "../include/utils.h"
 #include "../include/servSock.h"
-#include "../include/commands/Pass.hpp"
-#include "../include/commands/Nick.hpp"
 #include "../include/utils.h"
 #include <iostream>
 #include <unistd.h>
@@ -25,9 +23,9 @@ Server::Server(const char *port, const char *passwd)
 {
 	std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {PASS, NICK}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {PASS, NICK, JOIN, MODE, PART, TOPIC}; // add command names here
 
-	cmdCreator	tmpCmdFactory[CMDS_N] = {Pass::create, Nick::create}; // add factory methods here
+	cmdCreator	tmpCmdFactory[CMDS_N] = {Pass::create, Nick::create, Join::create, Mode::create, Part::create, Topic::create}; // add factory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{
@@ -171,7 +169,7 @@ void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &clien
 {
 	ACommand	*cmd;
 
-	cmd = creator(*this, client, splitMsg(msg.c_str(), ' '));
+	cmd = creator(*this, client, splitMsg(msg.c_str(), SPACE), countWrds(msg.c_str(), SPACE));
 
 	cmd->parse();
 	cmd->execute();
@@ -203,5 +201,38 @@ void	Server::procCmds(Client &client)
 		}
 
 		client >> msg;
+	}
+}
+
+// channel management
+Channel	*Server::getChannel(const std::string& name)
+{
+	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->getName() == name)
+			return *it;
+	}
+	return (NULL);
+}
+
+void Server::addChannel(const std::string& name, Channel* channel)
+{
+	if (!getChannel(name))
+		channels.push_back(channel);
+}
+
+void Server::removeChannel(const std::string& name, Channel* channel)
+{
+	if (!getChannel(name))
+	{
+    	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+    	{
+    	    if (*it == channel)
+    	    {
+    	        delete *it;
+    	        channels.erase(it);
+    	        break;
+    	    }
+    	}
 	}
 }

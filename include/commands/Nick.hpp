@@ -6,14 +6,14 @@
 class Nick : public ACommand
 {
 	public:
-		Nick(Server &server, Client &client, char **args);
+		Nick(Server &server, Client &client, char **args, int argc);
 		~Nick();
 
 		void			parse();
 		void			execute();
 		void			resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args);
+		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };
 
 #endif

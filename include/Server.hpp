@@ -2,14 +2,11 @@
 # define Server_HPP
 # include "Monitor.hpp"
 # include "ClientList.hpp"
+# include "Channel.hpp"
 # include "commands/commands.h"
-# include "commands/ACommand.hpp"
 # include <vector>
 
-class ACommand;
-class Server;
-
-typedef ACommand    *(*cmdCreator)(Server &server, Client &client, char **args);
+typedef ACommand    *(*cmdCreator)(Server &server, Client &client, char **args, int argc);
 
 class Server
 {
@@ -20,6 +17,7 @@ class Server
         ClientList  clients;
         std::string	cmdNames[CMDS_N];
         cmdCreator	cmdFactory[CMDS_N];
+		std::vector<Channel*> channels;
 
     public:
         Server();
@@ -30,6 +28,10 @@ class Server
         Server		&operator = (const Server &rhs);
         void    	launch();
 		std::string	getPasswd();
+		// channel management
+		Channel*	getChannel(const std::string& name);
+		void		addChannel(const std::string& name, Channel* channel);
+		void		removeChannel(const std::string& name, Channel* channel);
 
 	private:
         void    	acceptCnt();

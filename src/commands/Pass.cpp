@@ -1,8 +1,9 @@
-#include "../../include/commands/Pass.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 #include <iostream>
 
-Pass::Pass(Server &server, Client &client, char **args)
-	: ACommand(PASS, server, client, args)
+Pass::Pass(Server &server, Client &client, char **args, int argc)
+	: ACommand(PASS, server, client, args, argc)
 {
 	std::cout << "Pass's Parametrized Constructor called\n";
 }
@@ -21,12 +22,7 @@ void	Pass::parse()
 {
 	client.setHasAuthed(false); // for multiple PASS sent case
 
-	int	ac = 0;
-
-	while (args[ac])
-		ac++;
-
-	if (ac < ARGS_N)
+	if (argc < ARGS_N)
 	{
 		respStr = ERR_NEEDMOREPARAMS(name);
 		return ;
@@ -60,7 +56,7 @@ void	Pass::resp()
 }
 
 
-ACommand	*Pass::create(Server &server, Client &client, char **args)
+ACommand	*Pass::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Pass(server, client, args));
+	return (new Pass(server, client, args, argc));
 }

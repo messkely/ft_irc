@@ -4,7 +4,7 @@
 #include <exception>
 #include <iostream>
 
-static int	countWrds(const char *str, char sep)
+int	countWrds(const char *str, char sep)
 {
 	int	words = 0;
 	int	i = 0;
