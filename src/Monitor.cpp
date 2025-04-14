@@ -29,7 +29,7 @@ Monitor	&Monitor::operator = (const Monitor &rhs)
 	return (*this);
 }
 
-//adds fd to the fds being monitored for events
+//adds fd to be monitored for events
 void	Monitor::add(int fd, short events)
 {
 	pollfd	pfd;

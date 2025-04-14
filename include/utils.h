@@ -2,7 +2,7 @@
 # define utils_h
 # include <string>
 
-char	**split(const char *str, char sep);
-int		foundWrd(std::string str, std::string word);
+char	**splitMsg(const char *str, char sep);
+bool	msgHasCommand(std::string str, std::string word);
 
 #endif

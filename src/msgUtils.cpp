@@ -1,16 +1,17 @@
 #include "../include/error.h"
+#include <string>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
 
-int	countWrds(const char *str, char sep)
+static int	countWrds(const char *str, char sep)
 {
 	int	words = 0;
 	int	i = 0;
 
 	while (str[i] == sep)
 		i++;
-	
+
 	while (str[i])
 	{
 		if (str[i] != sep && (str[i + 1] == sep || !str[i + 1]))
@@ -21,7 +22,7 @@ int	countWrds(const char *str, char sep)
 	return (words);
 }
 
-char	*getNextWord(const char *str, char sep)
+static char	*getNextWord(const char *str, char sep)
 {
 	static int	i;
 	int			j = 0;
@@ -39,7 +40,7 @@ char	*getNextWord(const char *str, char sep)
 
 	j = 0;
 	while (str[i] != sep && str[i])
-		word[j++] = str[i++];
+			word[j++] = str[i++];
 
 	if (!str[i]) // done with str
 		i = 0;
@@ -47,7 +48,7 @@ char	*getNextWord(const char *str, char sep)
 	return (word[j] = '\0', word);
 }
 
-void	freeArr(char **arr, int i)
+static void	freeArr(char **arr, int i)
 {
 	while (i >= 0)
 		free(arr[i--]);
@@ -57,7 +58,7 @@ void	freeArr(char **arr, int i)
 	rtimeThrow("malloc");
 }
 
-char	**split(const char *str, char sep)
+char	**splitMsg(const char *str, char sep)
 {
 	char	**arr;
 	int		words = countWrds(str, sep);
@@ -65,6 +66,7 @@ char	**split(const char *str, char sep)
 
 	if (!words)
 		return (NULL);
+
 	arr = (char **)malloc(sizeof(char *) * (words + 1));
 	if (!arr)
 		rtimeThrow("malloc");
@@ -79,4 +81,28 @@ char	**split(const char *str, char sep)
 	}
 
 	return (arr[i] = NULL, arr);
+}
+
+bool	msgHasCommand(std::string str, std::string word)
+{
+	size_t	pos = str.find(word);
+
+	while (pos != std::string::npos)
+	{
+		if (
+				(!pos && (str[word.size()] == ' ' || str.size() == word.size()))
+				||
+				(pos && str[pos - 1] == ' ' &&
+					(
+						str[pos + word.size()] == ' ' ||
+						str[pos + word.size()] == '\0'
+					)
+				)
+		)
+			return (true);
+		
+		pos = str.find(word, pos + word.size());
+	}
+
+	return (false);
 }

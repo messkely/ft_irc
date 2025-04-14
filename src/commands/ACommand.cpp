@@ -1,8 +1,8 @@
 #include "../../include/commands/ACommand.hpp"
 #include <iostream>
 
-ACommand::ACommand(Server &server, Client &client, char **args)
-	: server(server), client(client), args(args), respVal(NORESP)
+ACommand::ACommand(std::string name, Server &server, Client &client, char **args)
+	: name(name), server(server), client(client), args(args)
 {
 	std::cout << "ACommand's Parametrized Constructor called\n";
 }

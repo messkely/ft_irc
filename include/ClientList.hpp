@@ -12,10 +12,10 @@ class ClientList
 		ClientList(const ClientList &other);
 		~ClientList();
 
-		ClientList		&operator = (const ClientList &rhs);
-		void			add(int fd);
-		void			remove(int fd);
-		Client	&getClientByFd(int fd);
+		ClientList	&operator = (const ClientList &rhs);
+		void		add(int fd, bool passwdBased);
+		void		remove(int fd);
+		Client		&getClientByFd(int fd);
 };
 
 #endif

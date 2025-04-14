@@ -2,22 +2,23 @@
 # define ACommand_HPP
 # include "../Server.hpp"
 # include "../Client.hpp"
+# include "../replies.h"
+# include "commands.h"
 # include <stdlib.h>
-
-# define NORESP -1
 
 class Server;
 
 class ACommand
 {
 	protected:
-		Server	&server;
-		Client	&client;
-		char	**args;
-		int		respVal;
-	
+		std::string	name;
+		Server		&server;
+		Client		&client;
+		char		**args;
+		std::string	respStr;
+
 	public:
-		ACommand(Server &server, Client &client, char **args);
+		ACommand(std::string name, Server &server, Client &client, char **args);
 		virtual ~ACommand();
 
 		virtual void	parse() = 0;

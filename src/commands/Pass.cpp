@@ -2,7 +2,7 @@
 #include <iostream>
 
 Pass::Pass(Server &server, Client &client, char **args)
-	: ACommand(server, client, args)
+	: ACommand(PASS, server, client, args)
 {
 	std::cout << "Pass's Parametrized Constructor called\n";
 }
@@ -19,33 +19,44 @@ Pass::~Pass()
 
 void	Pass::parse()
 {
+	client.setHasAuthed(false); // for multiple PASS sent case
+
 	int	ac = 0;
 
 	while (args[ac])
 		ac++;
 
-	if (ac == 1)
-		respVal = 461;
+	if (ac < ARGS_N)
+	{
+		respStr = ERR_NEEDMOREPARAMS(name);
+		return ;
+	}
+
+	if (client.getIsAccepted())
+	{
+		respStr = ERR_ALREADYREGISTRED(client.getNickname());
+		return ;
+	}
+
+	if (server.getPasswd() != args[1])
+	{
+		respStr = ERR_PASSWDMISMATCH(client.getNickname());
+		return ;
+	}
+
+	client.setHasAuthed(true);
 }
 
 void	Pass::execute()
 {
-	// compare server Password with the one in argument list
-	// if same allow connection
-	// ;reject otherwise
-
-	if (respVal != NORESP)
+	if (respStr != NORESP)
 		return ;
 
 }
 
 void	Pass::resp()
 {
-	// handle one or multiple responses
-
-	// for example only one to be handled in Pass case
-
-	client << respVal;
+	client << respStr;
 }
 
 
