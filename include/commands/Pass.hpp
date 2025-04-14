@@ -5,14 +5,14 @@
 class Pass : public ACommand
 {
 	public:
-		Pass(Server &server, Client &client, char **args);
+		Pass(Server &server, Client &client, char **args, int ac);
 		~Pass();
 
 		void			parse();
 		void			execute();
 		void			resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args);
+		static ACommand	*create(Server &server, Client &client, char **args, int ac);
 };
 
 #endif

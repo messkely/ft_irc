@@ -1,15 +1,15 @@
 #include "../../include/commands/Pass.hpp"
 #include <iostream>
 
-Pass::Pass(Server &server, Client &client, char **args)
-	: ACommand(server, client, args)
+Pass::Pass(Server &server, Client &client, char **args, int ac)
+	: ACommand(server, client, args, ac)
 {
-	std::cout << "Pass's Parametrized Constructor called\n";
+	// std::cout << "Pass's Parametrized Constructor called\n";
 }
 
 Pass::~Pass() 
 {
-	std::cout << "Pass's Destructor called\n";
+	// std::cout << "Pass's Destructor called\n";
 
 	for (int i = 0; args[i]; i++)
 		free(args[i]);
@@ -52,7 +52,7 @@ void	Pass::resp()
 }
 
 
-ACommand	*Pass::create(Server &server, Client &client, char **args)
+ACommand	*Pass::create(Server &server, Client &client, char **args, int ac)
 {
-	return (new Pass(server, client, args));
+	return (new Pass(server, client, args, ac));
 }

@@ -6,19 +6,19 @@
 
 Monitor::Monitor()
 {
-	std::cout << "Monitor's Default Constructor called\n";
+	// std::cout << "Monitor's Default Constructor called\n";
 }
 
 Monitor::Monitor(const Monitor &other) 
 {
-	std::cout << "Monitor's Copy Constructor called\n";
+	// std::cout << "Monitor's Copy Constructor called\n";
 
 	*this = other;
 }
 
 Monitor::~Monitor() 
 {
-	std::cout << "Monitor's Destructor called\n";
+	// std::cout << "Monitor's Destructor called\n";
 }
 
 
