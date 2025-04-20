@@ -1,13 +1,13 @@
-#ifndef Pass_HPP
-# define Pass_HPP
+#ifndef Nick_HPP
+# define Nick_HPP
 # define ARGS_N 2
 # include "ACommand.hpp"
 
-class Pass : public ACommand
+class Nick : public ACommand
 {
 	public:
-		Pass(Server &server, Client &client, char **argv, int argc);
-		~Pass();
+		Nick(Server &server, Client &client, char **args, int argc);
+		~Nick();
 
 		void			parse();
 		void			execute();

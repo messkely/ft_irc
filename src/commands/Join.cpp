@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/commands/Join.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 
-Join::Join(Server &server, Client &client, char **args, int ac)
-	: ACommand(server, client, args, ac)
+Join::Join(Server &server, Client &client, char **args, int argc)
+	: ACommand(JOIN, server, client, args, argc)
 {}
 
 Join::~Join()
@@ -21,8 +22,8 @@ Join::~Join()
 
 void Join::parse()
 {
-	if (ac < 2 || !args || !args[1]) {
-		respVal = NORESP;
+	if (argc < 2 || !args || !args[1]) {
+		respStr = NORESP;
 		return;
 	}
 
@@ -32,19 +33,19 @@ void Join::parse()
 	while (std::getline(ssChannels, channel, ',')) {
 		if (channel.empty() || (channel[0] != '#' && channel[0] != '&'))
 		{
-			respVal = NORESP;
+			respStr = NORESP;
 			return;
 		}
 		if (channel.find(' ') != std::string::npos)
 		{
-			respVal = NORESP;
+			respStr = NORESP;
 			return;
 		}
 		channelNames.push_back(channel);
 	}
 
 	// split keys
-	if (ac >= 3 && args[2])
+	if (argc >= 3 && args[2])
 	{
 		std::stringstream ssKeys(args[2]);
 		std::string key;
@@ -52,13 +53,13 @@ void Join::parse()
 			channelKeys.push_back(key);
 	}
 
-	respVal = RESP;
+	respStr = NORESP;
 }
 
 
 void Join::execute()
 {
-	if (respVal != RESP)
+	if (respStr != NORESP)
 		return;
 
 	for (size_t i = 0; i < channelNames.size(); ++i)
@@ -109,7 +110,7 @@ void Join::resp()
 	// handle response
 }
 
-ACommand	*Join::create(Server &server, Client &client, char **args, int ac)
+ACommand	*Join::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Join(server, client, args, ac));
+	return (new Join(server, client, args, argc));
 }

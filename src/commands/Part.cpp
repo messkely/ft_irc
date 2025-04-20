@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/commands/Part.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 
-Part::Part(Server &server, Client &client, char **args, int ac)
-	: ACommand(server, client, args, ac)
+Part::Part(Server &server, Client &client, char **args, int argc)
+	: ACommand(PART, server, client, args, argc)
 {
 }
 
@@ -23,9 +24,9 @@ Part::~Part()
 
 void Part::parse()
 {
-	if (ac < 2 || !args || !args[1])
+	if (argc < 2 || !args || !args[1])
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 
@@ -35,15 +36,15 @@ void Part::parse()
 	{
 		if (chan.empty() || (chan[0] != '#' && chan[0] != '&') || chan.find(' ') != std::string::npos)
 		{
-			respVal = NORESP;
+			respStr = NORESP;
 			return;
 		}
 		channelNames.push_back(chan);
 	}
 
-	if (ac > 2)
+	if (argc > 2)
 	{
-		for (int i = 2; i < ac; ++i)
+		for (int i = 2; i < argc; ++i)
 		{
 			if (args[i])
 			{
@@ -56,14 +57,14 @@ void Part::parse()
 			reason.erase(0, 1);
 	}
 
-	respVal = RESP;
+	respStr = NORESP;
 }
 
 
 
 void Part::execute()
 {
-	if (respVal != RESP)
+	if (respStr != NORESP)
 		return;
 
 	for (size_t i = 0; i < channelNames.size(); ++i)
@@ -92,7 +93,7 @@ void Part::resp()
 	// handle response
 }
 
-ACommand *Part::create(Server &server, Client &client, char **args, int ac)
+ACommand *Part::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Part(server, client, args, ac));
+	return (new Part(server, client, args, argc));
 }

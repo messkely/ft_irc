@@ -4,19 +4,21 @@
 
 ClientList::ClientList()
 {
-	// std::cout << "ClientList's Default Constructor called\n";
+	std::cout << "ClientList's Default Constructor called\n";
+
+	add(-1, false); // adding a placeholder
 }
 
 ClientList::ClientList(const ClientList &other) 
 {
-	// std::cout << "ClientList's Copy Constructor called\n";
+	std::cout << "ClientList's Copy Constructor called\n";
 
 	*this = other;
 }
 
 ClientList::~ClientList() 
 {
-	// std::cout << "ClientList's Destructor called\n";
+	std::cout << "ClientList's Destructor called\n";
 
 	for (std::size_t i = 0; i < lst.size(); i++)
 		close(lst[i].getSockfd());
@@ -31,9 +33,9 @@ ClientList	&ClientList::operator = (const ClientList &rhs)
 }
 
 // adds new client to the list
-void	ClientList::add(int fd)
+void	ClientList::add(int fd, bool passwdBased)
 {
-	lst.push_back(Client(fd));
+	lst.push_back(Client(fd, passwdBased));
 }
 
 void	ClientList::remove(int fd)
@@ -58,8 +60,8 @@ Client	&ClientList::getClientByFd(int fd)
 	for (i = 0; i < lst.size(); i++)
 	{
 		if (lst[i].getSockfd() == fd)
-			break ;
+			return (lst[i]);
 	}
 
-	return (lst[i]);
+	return (lst[i - 1]);
 }

@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/commands/Mode.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 
-Mode::Mode(Server &server, Client &client, char **args, int ac)
-	: ACommand(server, client, args, ac)
+Mode::Mode(Server &server, Client &client, char **args, int argc)
+	: ACommand(MODE, server, client, args, argc)
 {
 }
 
@@ -21,9 +22,9 @@ Mode::~Mode() {}
 
 void Mode::parse()
 {
-	if (ac < 2 || !args || !args[1] || !args[2])
+	if (argc < 2 || !args || !args[1] || !args[2])
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 
@@ -32,13 +33,13 @@ void Mode::parse()
 
 	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 
 	if (modeArg.empty() || (modeArg[0] != '+' && modeArg[0] != '-'))
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 	int paramIndex = 3;
@@ -54,16 +55,16 @@ void Mode::parse()
 		}
 		if (!isValidMode(ch))
 		{
-			respVal = NORESP;
+			respStr = NORESP;
 			return;
 		}
 		std::string mparam = "";
 		// For modes that require a parameter: k, l, or o.
 		if (ch == 'k' || ch == 'l' || ch == 'o')
 		{
-			if (paramIndex >= ac || !args[paramIndex])
+			if (paramIndex >= argc || !args[paramIndex])
 			{
-				respVal = NORESP;
+				respStr = NORESP;
 				return;
 			}
 			mparam = args[paramIndex];
@@ -71,12 +72,12 @@ void Mode::parse()
 		}
 		modeChanges.push_back(ModeChange(currentSign, ch, mparam));
 	}
-	respVal = RESP;
+	respStr = NORESP;
 }
 
 void Mode::execute()
 {
-	if (respVal != RESP)
+	if (respStr !=NORESP)
 		return;
 
 	Channel *channel = server.getChannel(channelName);
@@ -117,9 +118,9 @@ void Mode::resp()
 	// handle response
 }
 
-ACommand *Mode::create(Server &server, Client &client, char **args, int ac)
+ACommand *Mode::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Mode(server, client, args, ac));
+	return (new Mode(server, client, args, argc));
 }
 
 bool Mode::isValidMode(char modeLetter)
@@ -176,7 +177,7 @@ void Mode::isUserLimit(Channel *channel, std::string option, std::string option_
 	int limit = std::atoi(option_arg.c_str());
 	if (!limit)
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 	if (option[0] == '-')

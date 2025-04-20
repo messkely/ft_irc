@@ -24,14 +24,14 @@ class Join : public ACommand
 		std::vector<std::string> channelNames;
 		std::vector<std::string> channelKeys;
 	public:
-		Join(Server &server, Client &client, char **args, int ac);
+		Join(Server &server, Client &client, char **args, int argc);
 		virtual ~Join();
 
 		virtual void parse();
 		virtual void execute();
 		virtual void resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args, int ac);
+		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };
 
 #endif

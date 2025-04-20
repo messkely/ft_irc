@@ -1,15 +1,16 @@
-#include "../../include/commands/Pass.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 #include <iostream>
 
-Pass::Pass(Server &server, Client &client, char **args, int ac)
-	: ACommand(server, client, args, ac)
+Pass::Pass(Server &server, Client &client, char **args, int argc)
+	: ACommand(PASS, server, client, args, argc)
 {
-	// std::cout << "Pass's Parametrized Constructor called\n";
+	std::cout << "Pass's Parametrized Constructor called\n";
 }
 
 Pass::~Pass() 
 {
-	// std::cout << "Pass's Destructor called\n";
+	std::cout << "Pass's Destructor called\n";
 
 	for (int i = 0; args[i]; i++)
 		free(args[i]);
@@ -19,40 +20,43 @@ Pass::~Pass()
 
 void	Pass::parse()
 {
-	int	ac = 0;
+	client.setHasAuthed(false); // for multiple PASS sent case
 
-	while (args[ac])
+	if (argc < ARGS_N)
 	{
-		std::cout << ac << args[ac] << std::endl;
-		ac++;
+		respStr = ERR_NEEDMOREPARAMS(name);
+		return ;
 	}
 
-	if (ac == 1)
-		respVal = 461;
+	if (client.getIsAccepted())
+	{
+		respStr = ERR_ALREADYREGISTRED(client.getNickname());
+		return ;
+	}
+
+	if (server.getPasswd() != args[1])
+	{
+		respStr = ERR_PASSWDMISMATCH(client.getNickname());
+		return ;
+	}
+
+	client.setHasAuthed(true);
 }
 
 void	Pass::execute()
 {
-	// compare server Password with the one in argument list
-	// if same allow connection
-	// ;reject otherwise
-
-	if (respVal != NORESP)
+	if (respStr != NORESP)
 		return ;
 
 }
 
 void	Pass::resp()
 {
-	// handle one or multiple responses
-
-	// for example only one to be handled in Pass case
-
-	client << respVal;
+	client << respStr;
 }
 
 
-ACommand	*Pass::create(Server &server, Client &client, char **args, int ac)
+ACommand	*Pass::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Pass(server, client, args, ac));
+	return (new Pass(server, client, args, argc));
 }

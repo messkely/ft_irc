@@ -23,14 +23,14 @@ class Topic : public ACommand
 		std::vector<std::string> channelNames;
 		std::string topic;
 	public:
-		Topic(Server &server, Client &client, char **args, int ac);
+		Topic(Server &server, Client &client, char **args, int argc);
 		virtual ~Topic();
 
 		virtual void parse();
 		virtual void execute();
 		virtual void resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args, int ac);
+		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };
 
 #endif

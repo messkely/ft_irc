@@ -2,8 +2,10 @@
 # define utils_h
 # include <string>
 
-char	**split(const char *str, char sep);
+# define SPACE ' '
+
+char	**splitMsg(const char *str, char sep);
 int		countWrds(const char *str, char sep);
-int		foundWrd(std::string str, std::string word);
+bool	msgHasCommand(std::string str, std::string word);
 
 #endif

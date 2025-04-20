@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/commands/Topic.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 
-Topic::Topic(Server &server, Client &client, char **args, int ac)
-	: ACommand(server, client, args, ac)
+Topic::Topic(Server &server, Client &client, char **args, int argc)
+	: ACommand(TOPIC, server, client, args, argc)
 {
 }
 
@@ -23,9 +24,9 @@ Topic::~Topic()
 
 void Topic::parse()
 {
-	if (ac < 2 || !args || !args[1])
+	if (argc < 2 || !args || !args[1])
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 
@@ -35,15 +36,15 @@ void Topic::parse()
 	{
 		if (chan.empty() || (chan[0] != '#' && chan[0] != '&') || chan.find(' ') != std::string::npos)
 		{
-			respVal = NORESP;
+			respStr = NORESP;
 			return;
 		}
 		channelNames.push_back(chan);
 	}
 
-	if (ac > 2)
+	if (argc > 2)
 	{
-		for (int i = 2; i < ac; ++i)
+		for (int i = 2; i < argc; ++i)
 		{
 			if (args[i])
 			{
@@ -56,12 +57,12 @@ void Topic::parse()
 			topic.erase(0, 1);
 	}
 
-	respVal = RESP;
+	respStr =NORESP;
 }
 
 void Topic::execute()
 {
-	if (respVal != RESP)
+	if (respStr !=NORESP)
 		return;
 	for (size_t i = 0; i < channelNames.size(); ++i)
 	{
@@ -105,7 +106,7 @@ void Topic::resp()
 	// handle response
 }
 
-ACommand *Topic::create(Server &server, Client &client, char **args, int ac)
+ACommand *Topic::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Topic(server, client, args, ac));
+	return (new Topic(server, client, args, argc));
 }

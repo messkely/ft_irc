@@ -2,11 +2,6 @@
 #include "../include/error.h"
 #include "../include/utils.h"
 #include "../include/servSock.h"
-#include "../include/commands/Pass.hpp"
-#include "../include/commands/Join.hpp"
-#include "../include/commands/Mode.hpp"
-#include "../include/commands/Part.hpp"
-#include "../include/commands/Topic.hpp"
 #include "../include/utils.h"
 #include <iostream>
 #include <unistd.h>
@@ -20,18 +15,17 @@ using namespace std;
 
 Server::Server()
 {
-	// std::cout << "Server's Default Constructor called\n";
+	std::cout << "Server's Default Constructor called\n";
 }
 
 Server::Server(const char *port, const char *passwd) 
 	: servSock(getServSock(port)), passwd(passwd)
 {
-	// std::cout << "Server's Parametrized Constructor called\n";
+	std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {"PASS", "JOIN", "MODE", "PART", "TOPIC"}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {PASS, NICK, JOIN, MODE, PART, TOPIC}; // add command names here
 
-	ACommand	*(*tmpCmdFactory[CMDS_N])(Server &server, Client &client, char **args, int ac)
-	= {Pass::create,  Join::create, Mode::create, Part::create, Topic::create}; // add facatory methods here
+	cmdCreator	tmpCmdFactory[CMDS_N] = {Pass::create, Nick::create, Join::create, Mode::create, Part::create, Topic::create}; // add factory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{
@@ -42,14 +36,14 @@ Server::Server(const char *port, const char *passwd)
 
 Server::Server(const Server &other) 
 {
-	// std::cout << "Server's Copy Constructor called\n";
+	std::cout << "Server's Copy Constructor called\n";
 
 	*this = other;
 }
 
 Server::~Server() 
 {
-	// std::cout << "Server's Destructor called\n";
+	std::cout << "Server's Destructor called\n";
 
 	close(servSock);
 }
@@ -60,6 +54,11 @@ Server    &Server::operator = (const Server &rhs)
 	(void)rhs;
 
 	return (*this);
+}
+
+std::string	Server::getPasswd()
+{
+	return (passwd);
 }
 
 void    Server::launch()
@@ -75,21 +74,10 @@ void    Server::launch()
 
 		for (std::size_t i = 0; i < lst.size(); i++)
 		{
-			if (lst[i].revents & POLLOUT)
+			if (lst[i].revents & POLLIN || lst[i].revents & POLLOUT)
 			{
-				handleClientOutReady(clients.getClientByFd(lst[i].fd));
-
-				++fdsHandled;
-			}
-
-			if (lst[i].revents & POLLIN)
-			{
-				if (lst[i].fd == servSock)
-					acceptCnt();
-				else
-					handleClientInReady(clients.getClientByFd(lst[i].fd));
-
-				++fdsHandled;
+				handleReadyFd(lst[i]);
+				fdsHandled++;
 			}
 
 			if (monitor.getReadyFds() == fdsHandled)
@@ -109,7 +97,13 @@ void    Server::acceptCnt()
 		rtimeThrow("fcntl");
 
 	monitor.add(fd, POLLIN | POLLOUT);
-	clients.add(fd);
+	clients.add(fd, !getPasswd().empty());
+}
+
+void	Server::closeCnt(const Client &client)
+{
+		monitor.remove(client.getSockfd());
+		clients.remove(client.getSockfd());
 }
 
 void	Server::handleClientInReady(Client &client)
@@ -118,8 +112,7 @@ void	Server::handleClientInReady(Client &client)
 
 	if (closed) // connection closed
 	{
-		monitor.remove(client.getSockfd());
-		clients.remove(client.getSockfd());
+		closeCnt(client);
 		return ;
 	}
 
@@ -133,36 +126,85 @@ void	Server::handleClientOutReady(Client &client)
 		client.sendData();
 }
 
-// process data (i.e lines) stored in client buffer
-void	Server::procCmds(Client &client)
+void	Server::handleReadyFd(const pollfd &pfd)
 {
-	ACommand	*cmd;
-	string		line;
+	Client	&client = clients.getClientByFd(pfd.fd);
 
-	cerr << (client >> line) << endl;
-
-	while (!line.empty())
+	if (pfd.revents & POLLOUT)
 	{
-		for (int i = 0; i < CMDS_N; i++)
-		{
-			if (foundWrd(line, cmdNames[i])) // command [name and factoryMethod] share same index
-			{
-				cmd = cmdFactory[i](*this, client, split(line.c_str(), ' '), countWrds(line.c_str(), ' ')); // cmdFactory[indexOfFactoryMethod](argsList)
+		handleClientOutReady(client);
 
-				cmd->parse();
-				cmd->execute();
-				cmd->resp();
+		// close after wrbuf flush
+		if (client.getIsRejected())
+			closeCnt(client);
+	}
 
-				delete cmd;
-				break ;
-			}
-		}
-
-		client >> line;
+	if (pfd.revents & POLLIN)
+	{
+		if (pfd.fd == servSock)
+			acceptCnt();
+		else
+			handleClientInReady(client);
 	}
 }
 
-// channels managment
+// returns false if client validated server passwd or still in validation phase
+// ;true otherwise
+static bool	isClientRejected(Client &client, string cmdName)
+{
+	if (cmdName != PASS && !client.getIsAccepted() && !client.getHasAuthed())
+	{
+		client.setIsRejected(true);
+		return (true);
+	}
+
+	if (cmdName != PASS && !client.getIsAccepted())
+		client.setIsAccepted(true);
+
+	return (false);
+}
+
+// send command to the graveyard after finish
+void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &client)
+{
+	ACommand	*cmd;
+
+	cmd = creator(*this, client, splitMsg(msg.c_str(), SPACE), countWrds(msg.c_str(), SPACE));
+
+	cmd->parse();
+	cmd->execute();
+	cmd->resp();
+
+	delete cmd;
+}
+
+// process messages (i.e CRLF terminated lines) stored in client buffer
+void	Server::procCmds(Client &client)
+{
+	string		msg;
+
+	cerr << (client >> msg) << endl;
+
+	while (!msg.empty())
+	{
+		for (int i = 0; i < CMDS_N; i++)
+		{
+			if (!msgHasCommand(msg, cmdNames[i]))
+				continue ;
+
+			if (isClientRejected(client, cmdNames[i]))
+				return ;
+
+			runCommandLifeCycle(cmdFactory[i], msg, client);
+
+			break ;
+		}
+
+		client >> msg;
+	}
+}
+
+// channel management
 Channel	*Server::getChannel(const std::string& name)
 {
 	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
@@ -194,5 +236,3 @@ void Server::removeChannel(const std::string& name, Channel* channel)
     	}
 	}
 }
-
-

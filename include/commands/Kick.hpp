@@ -20,15 +20,16 @@
 class Kick : public ACommand
 {
 	private:
+		std::string channelName;
 	public:
-		Kick(Server &server, Client &client, char **args, int ac);
+		Kick(Server &server, Client &client, char **args, int argc);
 		virtual ~Kick();
 
 		virtual void parse();
 		virtual void execute();
 		virtual void resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args, int ac);
+		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };
 
 #endif

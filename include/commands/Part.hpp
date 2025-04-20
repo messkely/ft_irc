@@ -23,14 +23,14 @@ class Part : public ACommand
 		std::vector<std::string> channelNames;
 		std::string reason;
 	public:
-		Part(Server &server, Client &client, char **args, int ac);
+		Part(Server &server, Client &client, char **args, int argc);
 		virtual ~Part();
 
 		virtual void parse();
 		virtual void execute();
 		virtual void resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args, int ac);
+		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };
 
 #endif

@@ -2,13 +2,11 @@
 # define Server_HPP
 # include "Monitor.hpp"
 # include "ClientList.hpp"
-# include "commands/ACommand.hpp"
 # include "Channel.hpp"
+# include "commands/commands.h"
 # include <vector>
 
-# define CMDS_N 5
-
-class ACommand;
+typedef ACommand    *(*cmdCreator)(Server &server, Client &client, char **args, int argc);
 
 class Server
 {
@@ -17,9 +15,9 @@ class Server
 		std::string	passwd;
         Monitor     monitor;
         ClientList  clients;
-		std::vector<Channel*> channels;
         std::string	cmdNames[CMDS_N];
-        ACommand    *(*cmdFactory[CMDS_N])(Server &server, Client &client, char **args, int ac);
+        cmdCreator	cmdFactory[CMDS_N];
+		std::vector<Channel*> channels;
 
     public:
         Server();
@@ -27,16 +25,22 @@ class Server
         Server(const Server &other);
         ~Server();
 
-        Server	&operator = (const Server &rhs);
-        void    launch();
-        void    acceptCnt();
-		void	handleClientInReady(Client &client);
-		void	handleClientOutReady(Client &client);
-        void    procCmds(Client &client);
-		// channel managment
-		Channel* getChannel(const std::string& name);
-		void addChannel(const std::string& name, Channel* channel);
-		void removeChannel(const std::string& name, Channel* channel);
+        Server		&operator = (const Server &rhs);
+        void    	launch();
+		std::string	getPasswd();
+		// channel management
+		Channel*	getChannel(const std::string& name);
+		void		addChannel(const std::string& name, Channel* channel);
+		void		removeChannel(const std::string& name, Channel* channel);
+
+	private:
+        void    	acceptCnt();
+		void		closeCnt(const Client &client);
+		void		handleClientInReady(Client &client);
+		void		handleClientOutReady(Client &client);
+		void		handleReadyFd(const pollfd &pfd);
+		void		runCommandLifeCycle(cmdCreator &creator, std::string &msg, Client &client);
+        void    	procCmds(Client &client);
 };
 
 #endif

@@ -36,14 +36,14 @@ class Mode : public ACommand
 		std::vector<ModeChange> modeChanges;
 
 	public:
-		Mode(Server &server, Client &client, char **args, int ac);
+		Mode(Server &server, Client &client, char **args, int argc);
 		virtual ~Mode();
 
 		virtual void parse();
 		virtual void execute();
 		virtual void resp();
 
-		static ACommand	*create(Server &server, Client &client, char **args, int ac);
+		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 		
 		bool isValidMode(char modeLetter);
 		void isInvitOnly(Channel *channel, std::string option, std::string option_arg);

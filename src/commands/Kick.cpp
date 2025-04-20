@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../include/commands/Kick.hpp"
+#include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 
-Kick::Kick(Server &server, Client &client, char **args, int ac)
-	: ACommand(server, client, args, ac)
+Kick::Kick(Server &server, Client &client, char **args, int argc)
+	: ACommand(KICK, server, client, args, argc)
 {}
 
 Kick::~Kick()
@@ -21,9 +22,9 @@ Kick::~Kick()
 
 void Kick::parse()
 {
-	if (ac != 2 || !args || !args[1] || args[1][0] != '#')
+	if (argc != 2 || !args || !args[1] || args[1][0] != '#')
 	{
-		respVal = NORESP;
+		respStr = NORESP;
 		return;
 	}
 	for (int i = 1; args[1][i]; i++)
@@ -31,12 +32,12 @@ void Kick::parse()
 		if (!(args[1][i]) || args[1][i] == ' ')
 		{
 			std::cout << args[1][i] << std::endl;
-			respVal = NORESP;
+			respStr = NORESP;
 			return;
 		}
 	}
 	channelName = args[1];
-	respVal = RESP;
+	respStr = NORESP;
 }
 
 void Kick::execute()
@@ -48,7 +49,7 @@ void Kick::resp()
 	// handle response
 }
 
-ACommand	*Kick::create(Server &server, Client &client, char **args, int ac)
+ACommand	*Kick::create(Server &server, Client &client, char **args, int argc)
 {
-	return (new Kick(server, client, args, ac));
+	return (new Kick(server, client, args, argc));
 }
