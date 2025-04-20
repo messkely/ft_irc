@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Join::Join(Server &server, Client &client, char **args, int argc)
-	: ACommand(JOIN, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {}
 
 Join::~Join()

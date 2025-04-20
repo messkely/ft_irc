@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Mode::Mode(Server &server, Client &client, char **args, int argc)
-	: ACommand(MODE, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {
 }
 

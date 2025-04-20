@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Part::Part(Server &server, Client &client, char **args, int argc)
-	: ACommand(PART, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {
 }
 

@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Topic::Topic(Server &server, Client &client, char **args, int argc)
-	: ACommand(TOPIC, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {
 }
 

@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Kick::Kick(Server &server, Client &client, char **args, int argc)
-	: ACommand(KICK, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {}
 
 Kick::~Kick()

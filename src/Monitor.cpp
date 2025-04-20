@@ -55,7 +55,12 @@ void	Monitor::remove(int fd)
 // sleep until at least one fd is ready
 void	Monitor::listen()
 {
-	if ((readyFds = poll(pfds.data(), pfds.size(), -1)) == -1)
+	readyFds = 0;
+
+	while (readyFds != -1 && readyFds == 0)
+		readyFds = poll(pfds.data(), pfds.size(), TIMEOUT);
+
+	if (readyFds == -1)
 		rtimeThrow("poll");
 }
 
