@@ -6,14 +6,16 @@ HEADERS	= include/Server.hpp include/Client.hpp include/ClientList.hpp include/C
 		  include/Monitor.hpp include/servSock.h include/error.h include/replies.h				\
 		  include/parse.h include/utils.h include/commands/commands.h 							\
 		  include/commands/ACommand.hpp include/commands/Pass.hpp include/commands/Nick.hpp		\
-		  include/commands/Join.hpp include/commands/Mode.hpp include/commands/Part.hpp			\
-		  include/commands/Topic.hpp include/commands/Kick.hpp
+		  include/commands/User.hpp include/commands/Join.hpp  include/commands/Part.hpp		\
+		  include/commands/Topic.hpp include/commands/Kick.hpp include/commands/Mode.hpp		\
+		  include/commands/Invite.hpp include/commands/Privmsg.hpp
 
 SRCS	= src/main.cpp src/msgUtils.cpp src/servSockGen.cpp src/Server.cpp src/Monitor.cpp		\
 		  src/Client.cpp src/ClientList.cpp src/Channel.cpp src/userInpParse.cpp src/error.cpp	\
 		  src/commands/ACommand.cpp src/commands/Pass.cpp src/commands/Nick.cpp					\
-		  src/commands/Join.cpp src/commands/Mode.cpp src/commands/Topic.cpp					\
-		  src/commands/Kick.cpp src/commands/Topic.cpp src/commands/Part.cpp
+		  src/commands/User.cpp src/commands/Join.cpp src/commands/Topic.cpp					\
+		  src/commands/Kick.cpp src/commands/Part.cpp src/commands/Mode.cpp						\
+		   src/commands/Invite.cpp src/commands/Privmsg.cpp
 
 OBJS	= $(SRCS:.cpp=.o)
 

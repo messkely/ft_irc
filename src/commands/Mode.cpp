@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/08 11:45:47 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/12 17:16:13 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/22 10:58:41 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,18 +14,17 @@
 #include "../../include/Server.hpp"
 
 Mode::Mode(Server &server, Client &client, char **args, int argc)
-	: ACommand(MODE, server, client, args, argc)
-{
-}
+	: ACommand(server, client, args, argc)
+{}
 
 Mode::~Mode() {}
 
 void Mode::parse()
 {
-	if (argc < 2 || !args || !args[1] || !args[2])
+	if (argc < 2)
 	{
-		respStr = NORESP;
-		return;
+		respStr = ERR_NEEDMOREPARAMS((std::string)MODE);
+		return ;
 	}
 
 	channelName = args[1];
@@ -33,13 +32,13 @@ void Mode::parse()
 
 	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
 	{
-		respStr = NORESP;
+		respStr = ERR_NOTEXTTOSEND();
 		return;
 	}
 
 	if (modeArg.empty() || (modeArg[0] != '+' && modeArg[0] != '-'))
 	{
-		respStr = NORESP;
+		respStr = ERR_INVALIDMODEPARM(channelName, modeArg);
 		return;
 	}
 	int paramIndex = 3;
@@ -55,7 +54,7 @@ void Mode::parse()
 		}
 		if (!isValidMode(ch))
 		{
-			respStr = NORESP;
+			respStr = ERR_INVALIDMODEPARM(channelName, modeArg);
 			return;
 		}
 		std::string mparam = "";
@@ -64,7 +63,7 @@ void Mode::parse()
 		{
 			if (paramIndex >= argc || !args[paramIndex])
 			{
-				respStr = NORESP;
+				respStr = ERR_NEEDMOREPARAMS((std::string)MODE);
 				return;
 			}
 			mparam = args[paramIndex];
@@ -77,13 +76,30 @@ void Mode::parse()
 
 void Mode::execute()
 {
-	if (respStr !=NORESP)
+	if (respStr != NORESP)
 		return;
-
+	respStr.clear();
+	std::string modeString;
+	std::string modeParams;
 	Channel *channel = server.getChannel(channelName);
 	if (!channel)
+	{
+		respStr = ERR_NOSUCHCHANNEL(channelName);
 		return;
-	for (size_t i = 0; i < modeChanges.size(); i++)
+	}
+
+	if (!channel->hasUser(&client) && !channel->hasOperator(&client))
+	{
+		respStr = ERR_NOTONCHANNEL(client.getNickname(), channelName);
+		return;
+	}
+
+	if (channel->hasUser(&client))
+	{
+		respStr = ERR_CHANOPRIVSNEEDED(client.getNickname(), channelName);
+		return;
+	}
+	for (size_t i = 0; i < modeChanges.size(); ++i)
 	{
 		ModeChange mc = modeChanges[i];
 		std::string modeOpt;
@@ -107,15 +123,20 @@ void Mode::execute()
 		case 'l':
 			isUserLimit(channel, modeOpt, mc.param);
 			break;
-		default:
-			break;
 		}
+		modeString += mc.sign;
+		modeString += mc.mode;
+		if (!mc.param.empty())
+			modeParams += " " + mc.param;
 	}
+
+	respStr = RPL_MODE(channel->getName(), modeString, modeParams);
+	channel->broadcast(respStr);
 }
 
 void Mode::resp()
 {
-	// handle response
+	client << respStr;
 }
 
 ACommand *Mode::create(Server &server, Client &client, char **args, int argc)

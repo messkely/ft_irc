@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 16:30:58 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/10 16:46:11 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/22 10:39:39 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,9 @@
 class Kick : public ACommand
 {
 	private:
-		std::string channelName;
+		std::vector<std::string> channelNames;
+		std::vector<std::string> usersName;
+		std::string reason;
 	public:
 		Kick(Server &server, Client &client, char **args, int argc);
 		virtual ~Kick();

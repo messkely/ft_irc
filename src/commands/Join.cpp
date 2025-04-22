@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/06 18:24:10 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/11 13:28:23 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/22 10:56:12 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Join::Join(Server &server, Client &client, char **args, int argc)
-	: ACommand(JOIN, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {}
 
 Join::~Join()
@@ -22,7 +22,17 @@ Join::~Join()
 
 void Join::parse()
 {
-	if (argc < 2 || !args || !args[1]) {
+	if (argc < 2)
+	{
+		respStr = ERR_NEEDMOREPARAMS((std::string)JOIN);
+		return;
+	}
+
+	// Handle "JOIN 0" special case
+	if (std::string(args[1]) == "0")
+	{
+		channelNames.clear();
+		channelNames.push_back("0");
 		respStr = NORESP;
 		return;
 	}
@@ -30,15 +40,11 @@ void Join::parse()
 	// Split channel names
 	std::stringstream ssChannels(args[1]);
 	std::string channel;
-	while (std::getline(ssChannels, channel, ',')) {
-		if (channel.empty() || (channel[0] != '#' && channel[0] != '&'))
+	while (std::getline(ssChannels, channel, ','))
+	{
+		if ((channel[0] != '#' && channel[0] != '&')  || channel.length() <= 1)
 		{
-			respStr = NORESP;
-			return;
-		}
-		if (channel.find(' ') != std::string::npos)
-		{
-			respStr = NORESP;
+			respStr = ERR_NOTEXTTOSEND();
 			return;
 		}
 		channelNames.push_back(channel);
@@ -56,61 +62,80 @@ void Join::parse()
 	respStr = NORESP;
 }
 
-
 void Join::execute()
 {
 	if (respStr != NORESP)
 		return;
-
-	for (size_t i = 0; i < channelNames.size(); ++i)
+	respStr.clear();
+	size_t chan_size = channelNames.size();
+	// Handle "JOIN 0": Leave all channels
+	// if (chan_size == 1 && channelNames[0] == "0")
+	// {
+	// 	for (size_t i = 0; i < chan_size; ++i)
+	// 	{
+			
+	// 	}
+	// }
+	
+	for (size_t i = 0; i < chan_size; ++i)
 	{
-		std::string& name = channelNames[i];
-		std::string key = (i < channelKeys.size()) ? channelKeys[i] : "";
-		Channel* channel = server.getChannel(name);
+		std::string &name = channelNames[i];
+		std::string key = (i < chan_size) ? channelKeys[i] : "";
+		Channel *channel = server.getChannel(name);
 
 		if (!channel)
 		{
 			channel = new Channel(name);
 			server.addChannel(name, channel);
 			channel->addOperator(&client);
-			std::cout << "Channel [" << name << "] has been created." << std::endl;
 		}
 		else
 		{
 			if (!key.empty())
-			
+
 			{
 				if (!channel->getPassword().empty() && key != channel->getPassword())
 				{
-					std::cout << "Cannot join " << name << ": incorrect key." << std::endl;
-					continue;
+					respStr = ERR_BADCHANNELKEY(client.getNickname(), name);
+					return;
 				}
 			}
 			else if (!channel->getPassword().empty())
 			{
-				std::cout << "Cannot join " << name << ": key required." << std::endl;
-				continue;
+				respStr = ERR_BADCHANNELKEY(client.getNickname(), name);
+				return;
 			}
 		}
 
-		if (!channel->hasUser(&client) && !channel->getInvitOnly())
+		if (channel->hasUser(&client))
 		{
-			if (!channel->getUserLimit() || channel->getUserLimit() > channel->getUsers().size())
-				channel->addUser(&client);
-			else
-				std::cout << "Cannot join " << name << ": the channel full." << std::endl;
+			respStr = ERR_ALREADYREGISTRED(client.getNickname());
+			return;
 		}
-		else
-			std::cout << "Cannot join " << name << ": invite only or user not found." << std::endl;
+		// if (channel->getInvitOnly() && !channel->isInvited(&client))
+		if (channel->getInvitOnly())
+		{
+			respStr = ERR_INVITEONLYCHAN(client.getNickname(), name);
+			return;
+		}
+		if (channel->getUserLimit() && channel->getUsers().size() >= channel->getUserLimit())
+		{
+			respStr = ERR_CHANNELISFULL(client.getNickname(), name);
+			return;
+		}
+		channel->addUser(&client);
+		channel->broadcast(RSP_JOIN(client.getNickname(), client.getUsername(), client.getHostname(), name));
+		respStr += RSP_NAMREPLY(client.getNickname(), name, channel->getUserListStr());
+		respStr += RSP_ENDOFNAMES(client.getNickname(), name);
 	}
 }
 
 void Join::resp()
 {
-	// handle response
+	client << respStr;
 }
 
-ACommand	*Join::create(Server &server, Client &client, char **args, int argc)
+ACommand *Join::create(Server &server, Client &client, char **args, int argc)
 {
 	return (new Join(server, client, args, argc));
 }

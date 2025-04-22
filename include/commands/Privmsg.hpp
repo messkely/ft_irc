@@ -1,31 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Join.hpp                                           :+:      :+:    :+:   */
+/*   Privmsg.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/06 18:25:02 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/22 10:38:47 by messkely         ###   ########.fr       */
+/*   Created: 2025/04/19 17:13:27 by messkely          #+#    #+#             */
+/*   Updated: 2025/04/22 10:41:44 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef Join_HPP
-# define Join_HPP
+#ifndef PRIVMSG_HPP
+# define PRIVMSG_HPP
 
 #include <iostream>
-#include <sstream>
 #include "ACommand.hpp"
 #include "../Channel.hpp"
 
-class Join : public ACommand
+class Privmsg : public ACommand
 {
 	private:
+		std::vector<std::string> nicks;
 		std::vector<std::string> channelNames;
-		std::vector<std::string> channelKeys;
+		std::string msg;
 	public:
-		Join(Server &server, Client &client, char **args, int argc);
-		virtual ~Join();
+		Privmsg(Server &server, Client &client, char **args, int argc);
+		virtual ~Privmsg();
 
 		virtual void parse();
 		virtual void execute();

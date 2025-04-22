@@ -2,14 +2,13 @@
 # define ACommand_HPP
 # include "../Client.hpp"
 # include "../replies.h"
-# include <stdlib.h>
+# include "../utils.h"
 
 class Server;
 
 class ACommand
 {
 	protected:
-		std::string	name;
 		Server		&server;
 		Client		&client;
 		char		**args;
@@ -17,7 +16,7 @@ class ACommand
 		std::string	respStr;
 
 	public:
-		ACommand(std::string name, Server &server, Client &client, char **args, int argc);
+		ACommand(Server &server, Client &client, char **args, int argc);
 		virtual ~ACommand();
 
 		virtual void	parse() = 0;

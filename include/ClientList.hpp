@@ -13,9 +13,10 @@ class ClientList
 		~ClientList();
 
 		ClientList	&operator = (const ClientList &rhs);
-		void		add(int fd, bool passwdBased);
+		void		add(int fd, std::string hostname, bool passwdBased);
 		void		remove(int fd);
 		Client		&getClientByFd(int fd);
+		Client		&getClientByNickname(std::string nickname);
 };
 
 #endif

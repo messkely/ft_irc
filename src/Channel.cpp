@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/05 12:05:55 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/11 13:14:10 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/17 12:06:51 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,14 +189,13 @@ void Channel::removeUserLimit()
 }
 
 // messaging
-void Channel::broadcast(std::string message, Client *sender)
+void Channel::broadcast(std::string message)
 {
 	(void)message;
 	for (std::vector<Client *>::iterator it = users.begin(); it != users.end(); ++it)
 	{
-		if (*it == sender)
-			continue;
 		// send the message to other users
+		*(*it) << message;
 	}
 }
 
@@ -239,4 +238,19 @@ bool Channel::getTopicLocked()
 std::vector<Client *> &Channel::getUsers()
 {
 	return users;
+}
+
+std::string			Channel::getUserListStr()
+{
+	std::string result;
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (hasOperator(users[i]))
+			result += "@";
+		result += users[i]->getNickname();
+		if (i != users.size() - 1)
+			result += " ";
+	}
+	std::cout << "[" + result + "]" << std::endl;
+	return (result);
 }

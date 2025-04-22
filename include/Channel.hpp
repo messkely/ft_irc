@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/05 10:34:50 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/11 13:11:54 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/17 11:39:34 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ class Channel
 		std::string topic;
 		std::string password; // +k
 		size_t		userLimit; // +l
-		bool	inviteOnly; // +i
-		bool	topicLocked; // +t
+		bool		inviteOnly; // +i
+		bool		topicLocked; // +t
 
 		std::vector<Client*> users;
 		std::vector<Client*> operators;	
@@ -54,7 +54,7 @@ class Channel
 		void removeUserLimit();
 		
 		// Messaging
-		void broadcast(std::string message, Client *sender);
+		void broadcast(std::string message);
 		void setTopic(const std::string& _topic);
 		
 		//Getters
@@ -65,6 +65,7 @@ class Channel
 		bool		getInvitOnly();
 		bool 		getTopicLocked();
 		std::vector<Client*>& getUsers();
+		std::string	getUserListStr();
 };
 
 #endif

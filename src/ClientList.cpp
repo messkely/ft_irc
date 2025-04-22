@@ -6,7 +6,7 @@ ClientList::ClientList()
 {
 	std::cout << "ClientList's Default Constructor called\n";
 
-	add(-1, false); // adding a placeholder
+	add(-1, "", false); // adding a placeholder
 }
 
 ClientList::ClientList(const ClientList &other) 
@@ -33,9 +33,9 @@ ClientList	&ClientList::operator = (const ClientList &rhs)
 }
 
 // adds new client to the list
-void	ClientList::add(int fd, bool passwdBased)
+void	ClientList::add(int fd, std::string hostname, bool passwdBased)
 {
-	lst.push_back(Client(fd, passwdBased));
+	lst.push_back(Client(fd, hostname, passwdBased));
 }
 
 void	ClientList::remove(int fd)
@@ -60,6 +60,20 @@ Client	&ClientList::getClientByFd(int fd)
 	for (i = 0; i < lst.size(); i++)
 	{
 		if (lst[i].getSockfd() == fd)
+			return (lst[i]);
+	}
+
+	return (lst[i - 1]);
+}
+
+// returns matching client if present; the last client if not
+Client	&ClientList::getClientByNickname(std::string nickname)
+{
+	std::size_t	i;
+
+	for (i = 0; i < lst.size(); i++)
+	{
+		if (lst[i].getNickname() == nickname)
 			return (lst[i]);
 	}
 

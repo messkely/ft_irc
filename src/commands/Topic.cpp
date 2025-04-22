@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 11:42:26 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/12 09:46:26 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/22 11:03:55 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,8 @@
 #include "../../include/Server.hpp"
 
 Topic::Topic(Server &server, Client &client, char **args, int argc)
-	: ACommand(TOPIC, server, client, args, argc)
-{
-}
+	: ACommand(server, client, args, argc)
+{}
 
 Topic::~Topic()
 {
@@ -24,9 +23,9 @@ Topic::~Topic()
 
 void Topic::parse()
 {
-	if (argc < 2 || !args || !args[1])
+	if (argc < 2)
 	{
-		respStr = NORESP;
+		respStr = ERR_NEEDMOREPARAMS((std::string)TOPIC);
 		return;
 	}
 
@@ -34,9 +33,9 @@ void Topic::parse()
 	std::string chan;
 	while (std::getline(ss, chan, ','))
 	{
-		if (chan.empty() || (chan[0] != '#' && chan[0] != '&') || chan.find(' ') != std::string::npos)
+		if ((chan[0] != '#' && chan[0] != '&') || chan.length() <= 1)
 		{
-			respStr = NORESP;
+			respStr = ERR_NOTEXTTOSEND();
 			return;
 		}
 		channelNames.push_back(chan);
@@ -57,53 +56,55 @@ void Topic::parse()
 			topic.erase(0, 1);
 	}
 
-	respStr =NORESP;
+	respStr = NORESP;
 }
 
 void Topic::execute()
 {
-	if (respStr !=NORESP)
+	std::string currentTopic;
+	if (respStr != NORESP)
 		return;
+	respStr.clear();
 	for (size_t i = 0; i < channelNames.size(); ++i)
 	{
 		std::string &name = channelNames[i];
 		Channel *chan = server.getChannel(name);
-
-		if (!chan || !chan->hasUser(&client))
+		if (!chan)
 		{
-			std::cout << "the client is not in the channel or channel not exist.\n";
+			respStr += ERR_NOSUCHCHANNEL(chan->getName());
 			continue;
 		}
-		// get the topic
-		if (topic.empty())
+
+		if (!chan->hasUser(&client) && !chan->hasOperator(&client))
 		{
-			std::string currentTopic = chan->getTopic();
-			std::cout << client.getNickname() << " requested topic for [" << chan->getName() << "]: " << currentTopic << "\n";
+			respStr += ERR_NOTONCHANNEL(client.getNickname(), chan->getName());
+			continue;
+		}
+
+		// get the topic
+		if (topic.empty() && !chan->getTopicLocked())
+		{
+			currentTopic = chan->getTopic();
+			if (currentTopic.empty())
+				respStr += RSP_NOTOPIC(client.getNickname(), chan->getName());
+			else
+				respStr += RSP_TOPIC(client.getNickname(), chan->getName(), currentTopic);
+			continue;
 		}
 		// change the Topic (or clear).
-		else
+		if (chan->getTopicLocked() && !chan->hasOperator(&client))
 		{
-			if (chan->getTopicLocked())
-			{
-				if (chan->hasOperator(&client))
-					chan->setTopic(topic);
-				else
-				{
-					std::cerr << client.getNickname() << " doesn't have permission to set the topic on [" << chan->getName() << "].\n";
-					continue;
-				}
-			}
-			else
-				chan->setTopic((topic[0] == ':') ? "" : topic);
-			std::cout << client.getNickname() << " set the topic for [" << chan->getName() << "] to "
-					  << (topic.empty() ? "<cleared>" : topic) << "\n";
+			respStr += ERR_CHANOPRIVSNEEDED(client.getNickname(), chan->getName());
+			continue;
 		}
+		chan->setTopic((topic[0] == ':') ? "" : topic);
+		respStr += RSP_TOPIC(client.getNickname(), chan->getName(), currentTopic);
 	}
 }
 
 void Topic::resp()
 {
-	// handle response
+	client << respStr;
 }
 
 ACommand *Topic::create(Server &server, Client &client, char **args, int argc)

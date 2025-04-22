@@ -1,7 +1,11 @@
 #ifndef Nick_HPP
 # define Nick_HPP
-# define ARGS_N 2
 # include "ACommand.hpp"
+
+# define AT '@'
+# define HASH '#'
+# define AND '&'
+# define ETCDOTS std::string("")
 
 class Nick : public ACommand
 {
@@ -14,6 +18,9 @@ class Nick : public ACommand
 		void			resp();
 
 		static ACommand	*create(Server &server, Client &client, char **args, int argc);
+
+	private:
+		bool	isNickErroneous(const char *nick);
 };
 
 #endif
