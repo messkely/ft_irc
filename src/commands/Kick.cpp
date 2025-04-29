@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/11 09:01:04 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/11 09:02:53 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/29 18:48:17 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Kick::Kick(Server &server, Client &client, char **args, int argc)
-	: ACommand(KICK, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {}
 
 Kick::~Kick()
@@ -22,31 +22,102 @@ Kick::~Kick()
 
 void Kick::parse()
 {
-	if (argc != 2 || !args || !args[1] || args[1][0] != '#')
+	if (argc < 3)
 	{
-		respStr = NORESP;
-		return;
+		respStr = ERR_NEEDMOREPARAMS(KICK);
+		return ;
 	}
-	for (int i = 1; args[1][i]; i++)
+
+	// process channels
+	std::stringstream ss(args[1]);
+	std::string chan;
+	while (std::getline(ss, chan, ','))
 	{
-		if (!(args[1][i]) || args[1][i] == ' ')
+		if (chan.empty() || (chan[0] != '#' && chan[0] != '&'))
 		{
-			std::cout << args[1][i] << std::endl;
-			respStr = NORESP;
+			respStr = ERR_NOSUCHCHANNEL(chan);
 			return;
 		}
+		channelNames.push_back(chan);
 	}
-	channelName = args[1];
+	
+	// process users
+	std::stringstream ssU(args[2]);
+	std::string user;
+	while (std::getline(ssU, user, ','))
+		usersName.push_back(user);
+
+	if (argc > 3)
+	{
+		for (int i = 3; i < argc; ++i)
+		{
+			if (args[i])
+			{
+				if (!reason.empty())
+					reason += " ";
+				reason += args[i];
+			}
+		}
+		if (!reason.empty() && reason[0] == ':')
+			reason.erase(0, 1);
+	}
 	respStr = NORESP;
 }
 
 void Kick::execute()
-{
+{	
+	if (respStr != NORESP)
+		return;
+
+	bool singleUser = usersName.size() == 1;
+
+	for (size_t i = 0; i < channelNames.size(); ++i)
+	{
+		std::string chanName = channelNames[i];
+		std::string userToKick = singleUser ? usersName[0] : 
+			(i < usersName.size() ? usersName[i] : "");
+
+		if (userToKick.empty())
+			continue;
+
+		Channel *ch = server.getChannel(chanName);
+		if (!ch)
+		{
+			respStr += ERR_NOSUCHCHANNEL(chanName);
+			continue;
+		}
+		if (!ch->hasUser(client))
+		{
+			respStr += ERR_NOTONCHANNEL(client.getNickname(), ch->getName());
+			continue;
+		}
+		if (ch->hasUser(client) && !ch->isOp(client))
+		{
+			respStr += ERR_CHANOPRIVSNEEDED(client.getNickname(), ch->getName());
+			continue;
+		}
+		Client& target = ch->findUser(userToKick);
+		if (target.getNickname() != userToKick)
+		{
+			respStr += ERR_USERNOTINCHANNEL(userToKick, ch->getName());
+			continue;
+		}
+		std::string tmpStr = RPL_KICK(client.getPrefix(), chanName, userToKick, reason);
+		ch->broadcast(client, tmpStr);
+		respStr += tmpStr;
+		ch->removeUser(target);
+		if (ch->getClientCount() < 1)
+		{
+			respStr += RPL_CHANNELREMOVED(client.getNickname(), chanName);
+			server.removeChannel(chanName);
+		}
+	}
 }
+
 
 void Kick::resp()
 {
-	// handle response
+	client << respStr;
 }
 
 ACommand	*Kick::create(Server &server, Client &client, char **args, int argc)

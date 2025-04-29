@@ -1,4 +1,5 @@
 #include "../include/error.h"
+#include "../include/utils.h"
 #include <string>
 #include <cstdlib>
 #include <exception>
@@ -31,6 +32,12 @@ static char	*getNextWord(const char *str, char sep)
 	while (str[i] == sep)
 		i++;
 
+	if (!str[i]) // done with str
+	{
+		i = 0;
+		return (NULL);
+	}
+
 	while (str[i + j] != sep && str[i + j])
 		j++;
 
@@ -40,10 +47,7 @@ static char	*getNextWord(const char *str, char sep)
 
 	j = 0;
 	while (str[i] != sep && str[i])
-			word[j++] = str[i++];
-
-	if (!str[i]) // done with str
-		i = 0;
+		word[j++] = str[i++];
 
 	return (word[j] = '\0', word);
 }
@@ -71,38 +75,56 @@ char	**splitMsg(const char *str, char sep)
 	if (!arr)
 		rtimeThrow("malloc");
 
-	while (i < words)
-	{
-		arr[i] = getNextWord(str, sep);
-		if (!arr[i])
-			freeArr(arr, i);
-
+	while ((arr[i] = getNextWord(str, sep)))
 		i++;
-	}
 
-	return (arr[i] = NULL, arr);
+	if (i != words)
+		freeArr(arr, i);
+
+	return (arr);
 }
 
-bool	msgHasCommand(std::string str, std::string word)
+// returns true if pos is start of str
+// or characters from pos back to start match fizz
+static bool	prevCharsAreFizz(std::string str, size_t pos, char fizz)
 {
-	size_t	pos = str.find(word);
+	for (int i = pos; i >= 0; i--)
+	{
+		if (str[i] != fizz)
+			return (false);
+	}
+
+	return (true);
+}
+
+bool	msgHasCommand(std::string msg, std::string cmd)
+{
+	size_t	pos = msg.find(cmd);
 
 	while (pos != std::string::npos)
 	{
 		if (
-				(!pos && (str[word.size()] == ' ' || str.size() == word.size()))
+				(!pos && (msg[cmd.size()] == SPACE || msg.size() == cmd.size()))
 				||
-				(pos && str[pos - 1] == ' ' &&
+				(pos && prevCharsAreFizz(msg, pos - 1, SPACE) &&
 					(
-						str[pos + word.size()] == ' ' ||
-						str[pos + word.size()] == '\0'
+						msg[pos + cmd.size()] == SPACE ||
+						msg[pos + cmd.size()] == '\0'
 					)
 				)
 		)
 			return (true);
-		
-		pos = str.find(word, pos + word.size());
+
+		pos = msg.find(cmd, pos + cmd.size());
 	}
 
 	return (false);
+}
+
+void	freeMsgArgs(char **args)
+{
+	for (int i = 0; args[i]; i++)
+		free(args[i]);
+
+	free(args);
 }

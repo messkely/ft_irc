@@ -1,30 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Part.hpp                                           :+:      :+:    :+:   */
+/*   Privmsg.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/10 10:00:51 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/22 21:07:33 by messkely         ###   ########.fr       */
+/*   Created: 2025/04/19 17:13:27 by messkely          #+#    #+#             */
+/*   Updated: 2025/04/22 21:07:55 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef Part_HPP
-# define Part_HPP
+#ifndef PRIVMSG_HPP
+# define PRIVMSG_HPP
 
 #include <iostream>
 #include "ACommand.hpp"
 #include "../Channel.hpp"
 
-class Part : public ACommand
+class Privmsg : public ACommand
 {
 	private:
+		std::vector<std::string> nicks;
 		std::vector<std::string> channelNames;
-		std::string reason;
+		std::string msg;
 	public:
-		Part(Server &server, Client &client, char **args, int argc);
-		virtual ~Part();
+		Privmsg(Server &server, Client &client, char **args, int argc);
+		virtual ~Privmsg();
 
 		virtual void parse();
 		virtual void execute();

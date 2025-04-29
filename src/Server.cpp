@@ -1,6 +1,5 @@
 #include "../include/Server.hpp"
 #include "../include/error.h"
-#include "../include/utils.h"
 #include "../include/servSock.h"
 #include "../include/utils.h"
 #include <iostream>
@@ -9,23 +8,20 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <new>
 
 using namespace std;
-
-Server::Server()
-{
-	std::cout << "Server's Default Constructor called\n";
-}
 
 Server::Server(const char *port, const char *passwd) 
 	: servSock(getServSock(port)), passwd(passwd)
 {
 	std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {PASS, NICK, JOIN, MODE, PART, TOPIC}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {PASS, NICK, USER, JOIN, MODE, PART, TOPIC, KICK, PRIVMSG, INVITE}; // add command names here
 
-	cmdCreator	tmpCmdFactory[CMDS_N] = {Pass::create, Nick::create, Join::create, Mode::create, Part::create, Topic::create}; // add factory methods here
+	cmdCreator	tmpCmdFactory[CMDS_N] =
+	{Pass::create, Nick::create, User::create, Join::create, Mode::create, Part::create, Topic::create, Kick::create, Privmsg::create, Invite::create}; // add factory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{
@@ -34,31 +30,11 @@ Server::Server(const char *port, const char *passwd)
 	}
 }
 
-Server::Server(const Server &other) 
-{
-	std::cout << "Server's Copy Constructor called\n";
-
-	*this = other;
-}
-
 Server::~Server() 
 {
 	std::cout << "Server's Destructor called\n";
 
 	close(servSock);
-}
-
-
-Server    &Server::operator = (const Server &rhs) 
-{
-	(void)rhs;
-
-	return (*this);
-}
-
-std::string	Server::getPasswd()
-{
-	return (passwd);
 }
 
 void    Server::launch()
@@ -86,18 +62,56 @@ void    Server::launch()
 	}
 }
 
+std::string	Server::getPasswd()
+{
+	return (passwd);
+}
+
+// returns matching client if present; the last client if not
+Client	&Server::getClientByNickname(string nickname)
+{
+	return clients.getClientByNickname(nickname);
+}
+
+bool	Server::isNicknameTaken(string nickname)
+{
+	return (getClientByNickname(nickname).getNickname() == nickname);
+}
+
+
+std::string	getIpStr(sockaddr_storage *addr)
+{
+	// char	ipStr[INET6_ADDRSTRLEN];
+	char	*ipStr = NULL;
+
+	// if (addr->ss_family == AF_INET6)
+	// 	; // handle ipv6 && resotre int hints
+	if (addr->ss_family == AF_INET)
+	{
+		sockaddr_in	*ipv4 = (sockaddr_in *)addr;
+
+		ipStr = inet_ntoa(ipv4->sin_addr);
+		if (!ipStr)
+			rtimeThrow("inet_ntoa");
+	}
+
+	return (ipStr);
+}
+
 void    Server::acceptCnt()
 {
-	int fd;
+	int 				fd;
+	sockaddr_storage	addr;
+	socklen_t			len = sizeof(addr);
 
-	if ((fd = accept(servSock, NULL, NULL)) == -1)
+	if ((fd = accept(servSock, (sockaddr *)&addr, &len)) == -1)
 		rtimeThrow("accept");
 
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		rtimeThrow("fcntl");
 
 	monitor.add(fd, POLLIN | POLLOUT);
-	clients.add(fd, !getPasswd().empty());
+	clients.add(fd, getIpStr(&addr), !getPasswd().empty());
 }
 
 void	Server::closeCnt(const Client &client)
@@ -148,9 +162,9 @@ void	Server::handleReadyFd(const pollfd &pfd)
 	}
 }
 
-// returns false if client validated server passwd or still in validation phase
-// ;true otherwise
-static bool	isClientRejected(Client &client, string cmdName)
+// returns true if command sent before registration or authentication
+// ;false otherwise
+static bool	isCommandDropped(Client &client, string cmdName)
 {
 	if (cmdName != PASS && !client.getIsAccepted() && !client.getHasAuthed())
 	{
@@ -160,6 +174,13 @@ static bool	isClientRejected(Client &client, string cmdName)
 
 	if (cmdName != PASS && !client.getIsAccepted())
 		client.setIsAccepted(true);
+
+	if (cmdName != PASS && cmdName != USER && cmdName != NICK
+		&& (client.getNickname().empty() || client.getUsername().empty()))
+	{
+		client << ERR_NOTREGISTERED(cmdName);
+		return (true);
+	}
 
 	return (false);
 }
@@ -178,27 +199,36 @@ void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &clien
 	delete cmd;
 }
 
+void	handleUnknownCommand(Client &client, string msg)
+{
+	char	**args = splitMsg(msg.c_str(), SPACE);
+
+	client << ERR_UNKNOWNCOMMAND(args[0]);
+}
+
 // process messages (i.e CRLF terminated lines) stored in client buffer
 void	Server::procCmds(Client &client)
 {
 	string		msg;
+	int			i;
 
 	cerr << (client >> msg) << endl;
 
 	while (!msg.empty())
 	{
-		for (int i = 0; i < CMDS_N; i++)
+		for (i = 0; i < CMDS_N; i++)
 		{
-			if (!msgHasCommand(msg, cmdNames[i]))
-				continue ;
+			if (msgHasCommand(msg, cmdNames[i]))
+			{
+				if (!isCommandDropped(client, cmdNames[i]))
+					runCommandLifeCycle(cmdFactory[i], msg, client);
 
-			if (isClientRejected(client, cmdNames[i]))
-				return ;
-
-			runCommandLifeCycle(cmdFactory[i], msg, client);
-
-			break ;
+				break ;
+			}
 		}
+
+		if (i == CMDS_N)
+			handleUnknownCommand(client, msg);
 
 		client >> msg;
 	}
@@ -221,18 +251,24 @@ void Server::addChannel(const std::string& name, Channel* channel)
 		channels.push_back(channel);
 }
 
-void Server::removeChannel(const std::string& name, Channel* channel)
+void Server::removeChannel(const std::string& name)
 {
-	if (!getChannel(name))
+	Channel *channel = getChannel(name);
+	if (channel)
 	{
     	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
     	{
     	    if (*it == channel)
     	    {
-    	        delete *it;
+    	        delete channel;
     	        channels.erase(it);
     	        break;
     	    }
     	}
 	}
+}
+
+std::vector<Channel*>& Server::getChannels()
+{
+    return (channels);
 }

@@ -13,8 +13,8 @@ Client::Client()
 	std::cout << "Client's Default Constructor called\n";
 }
 
-Client::Client(int fd, bool passwdBased)
-	: sockfd(fd), nickname("*"), isRejected(false), isAccepted(!passwdBased)
+Client::Client(int fd, std::string hostname, bool passwdBased)
+	: sockfd(fd), hostname(hostname), isRejected(false), isAccepted(!passwdBased)
 {
 	std::cout << "Client's Parametrized Constructor called\n";
 }
@@ -35,6 +35,7 @@ Client::~Client()
 Client	&Client::operator = (const Client &rhs) 
 {
 	sockfd = rhs.sockfd;
+	hostname = rhs.hostname;
 	nickname = rhs.nickname;
 	isRejected = rhs.isRejected;
 	isAccepted = rhs.isAccepted;
@@ -53,6 +54,16 @@ void	Client::setSockfd(int fd)
 	sockfd = fd;
 }
 
+std::string	Client::getHostname()
+{
+	return (hostname);
+}
+
+void	Client::setHostname(const std::string &newHostname)
+{
+	hostname = newHostname;
+}
+
 std::string	Client::getNickname()
 {
 	return (nickname);
@@ -61,6 +72,16 @@ std::string	Client::getNickname()
 void	Client::setNickname(const std::string &newNickname)
 {
 	nickname = newNickname;
+}
+
+std::string	Client::getUsername()
+{
+	return (username);
+}
+
+void	Client::setUsername(const std::string &newUsername)
+{
+	username = newUsername;
 }
 
 bool	Client::getIsRejected()
@@ -178,6 +199,8 @@ void	Client::sendData()
 	wrbuf.str("");
 }
 
+
+
 // returns true if wrbuf isn't empty ;false otherwise
 bool	Client::readyToSend()
 {
@@ -194,3 +217,9 @@ std::ostream	&operator << (std::ostream &os, Client &client)
 
 	return (os);
 }
+
+std::string Client::getPrefix() const
+{
+    return (":" + nickname + "!~" + username + "@" + hostname);
+}
+

@@ -8,7 +8,9 @@ class Client
 {
 	private:
 		int					sockfd;
+		std::string			hostname;
 		std::string			nickname;
+		std::string			username;
 		bool				isRejected;
 		bool				hasAuthed;
 		bool				isAccepted;
@@ -16,15 +18,19 @@ class Client
 		std::stringstream	wrbuf;
 	public:
 		Client();
-		Client(int fd, bool passwdBased);
+		Client(int fd, std::string hostname, bool passwdBased);
 		Client(const Client &other);
 		~Client();
 
 		Client				&operator = (const Client &rhs);
 		int					getSockfd() const;
 		void				setSockfd(int fd);
+		std::string			getHostname();
+		void				setHostname(const std::string &newHostname);
 		std::string			getNickname();
 		void				setNickname(const std::string &newNickname);
+		std::string			getUsername();
+		void				setUsername(const std::string &newUsername);
 		bool				getIsRejected();
 		void				setIsRejected(bool status);
 		bool				getHasAuthed();
@@ -36,6 +42,7 @@ class Client
 		ssize_t				recvData();
 		void				sendData();
 		bool				readyToSend();
+		std::string			getPrefix() const;
 
 		friend std::ostream	&operator << (std::ostream &os, Client &client);
 };
