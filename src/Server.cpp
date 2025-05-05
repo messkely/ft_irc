@@ -117,6 +117,7 @@ void    Server::acceptCnt()
 void	Server::closeCnt(const Client &client)
 {
 		monitor.remove(client.getSockfd());
+		leaveAllChannels(client.getSockfd());
 		clients.remove(client.getSockfd());
 }
 
@@ -235,6 +236,7 @@ void	Server::procCmds(Client &client)
 }
 
 // channel management
+
 Channel	*Server::getChannel(const std::string& name)
 {
 	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
@@ -271,4 +273,21 @@ void Server::removeChannel(const std::string& name)
 std::vector<Channel*>& Server::getChannels()
 {
     return (channels);
+}
+
+void Server::leaveAllChannels(int fd)
+{
+	Client	&client = clients.getClientByFd(fd);
+	std::vector<Channel *> &allChans = getChannels();
+    for (size_t idx = 0; idx < allChans.size(); ++idx)
+    {
+        Channel *ch = allChans[idx];
+        if (ch->hasUser(client))
+        {
+            std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
+            ch->broadcast(client, partMsg);
+            ch->removeUser(client);
+        }
+    }
+    return;
 }

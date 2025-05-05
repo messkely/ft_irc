@@ -37,6 +37,7 @@ Client	&Client::operator = (const Client &rhs)
 	sockfd = rhs.sockfd;
 	hostname = rhs.hostname;
 	nickname = rhs.nickname;
+	username = rhs.username;
 	isRejected = rhs.isRejected;
 	isAccepted = rhs.isAccepted;
 	hasAuthed = rhs.hasAuthed;

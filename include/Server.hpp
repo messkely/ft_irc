@@ -32,6 +32,7 @@ class Server
 		void		addChannel(const std::string& name, Channel* channel);
 		void		removeChannel(const std::string& name);
 		std::vector<Channel*>& getChannels();
+		void 		leaveAllChannels(int fd);
 
 	private:
         void		acceptCnt();
