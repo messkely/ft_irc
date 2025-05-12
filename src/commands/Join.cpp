@@ -23,7 +23,7 @@ Join::~Join()
 void Join::parse()
 {
 	if (argc < 2 || !args || !args[1]) {
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 
@@ -33,12 +33,12 @@ void Join::parse()
 	while (std::getline(ssChannels, channel, ',')) {
 		if (channel.empty() || (channel[0] != '#' && channel[0] != '&'))
 		{
-			respStr = NORESP;
+			rplStr = NORESP;
 			return;
 		}
 		if (channel.find(' ') != std::string::npos)
 		{
-			respStr = NORESP;
+			rplStr = NORESP;
 			return;
 		}
 		channelNames.push_back(channel);
@@ -53,13 +53,13 @@ void Join::parse()
 			channelKeys.push_back(key);
 	}
 
-	respStr = NORESP;
+	rplStr = NORESP;
 }
 
 
 void Join::execute()
 {
-	if (respStr != NORESP)
+	if (rplStr != NORESP)
 		return;
 
 	for (size_t i = 0; i < channelNames.size(); ++i)

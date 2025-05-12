@@ -26,7 +26,7 @@ int portParse(char *port)
 {
     int n = strtol(port, NULL, 10);
 
-    if ((n == 0 && !isZeroSeq(port)) || n < 0 || n > 65536)
+    if ((n == 0 && !isZeroSeq(port)) || n < 0 || n > 65535)
     {
         cerr << "Invalid Port: " << port << endl;
         return (FAILURE);

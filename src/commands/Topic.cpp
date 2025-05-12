@@ -26,7 +26,7 @@ void Topic::parse()
 {
 	if (argc < 2 || !args || !args[1])
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 
@@ -36,7 +36,7 @@ void Topic::parse()
 	{
 		if (chan.empty() || (chan[0] != '#' && chan[0] != '&') || chan.find(' ') != std::string::npos)
 		{
-			respStr = NORESP;
+			rplStr = NORESP;
 			return;
 		}
 		channelNames.push_back(chan);
@@ -57,12 +57,12 @@ void Topic::parse()
 			topic.erase(0, 1);
 	}
 
-	respStr =NORESP;
+	rplStr =NORESP;
 }
 
 void Topic::execute()
 {
-	if (respStr !=NORESP)
+	if (rplStr !=NORESP)
 		return;
 	for (size_t i = 0; i < channelNames.size(); ++i)
 	{

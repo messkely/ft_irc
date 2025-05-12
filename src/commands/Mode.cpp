@@ -24,7 +24,7 @@ void Mode::parse()
 {
 	if (argc < 2 || !args || !args[1] || !args[2])
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 
@@ -33,13 +33,13 @@ void Mode::parse()
 
 	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 
 	if (modeArg.empty() || (modeArg[0] != '+' && modeArg[0] != '-'))
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 	int paramIndex = 3;
@@ -55,7 +55,7 @@ void Mode::parse()
 		}
 		if (!isValidMode(ch))
 		{
-			respStr = NORESP;
+			rplStr = NORESP;
 			return;
 		}
 		std::string mparam = "";
@@ -64,7 +64,7 @@ void Mode::parse()
 		{
 			if (paramIndex >= argc || !args[paramIndex])
 			{
-				respStr = NORESP;
+				rplStr = NORESP;
 				return;
 			}
 			mparam = args[paramIndex];
@@ -72,12 +72,12 @@ void Mode::parse()
 		}
 		modeChanges.push_back(ModeChange(currentSign, ch, mparam));
 	}
-	respStr = NORESP;
+	rplStr = NORESP;
 }
 
 void Mode::execute()
 {
-	if (respStr !=NORESP)
+	if (rplStr !=NORESP)
 		return;
 
 	Channel *channel = server.getChannel(channelName);
@@ -177,7 +177,7 @@ void Mode::isUserLimit(Channel *channel, std::string option, std::string option_
 	int limit = std::atoi(option_arg.c_str());
 	if (!limit)
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 	if (option[0] == '-')

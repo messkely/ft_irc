@@ -17,31 +17,31 @@ void	User::parse()
 {
 	if (argc < USER_ARGS_N)
 	{
-		respStr = ERR_NEEDMOREPARAMS(USER);
+		rplStr = ERR_NEEDMOREPARAMS(USER);
 		return ;
 	}
 	
 	if (!client.getUsername().empty())
 	{
-		respStr = ERR_ALREADYREGISTRED(USER);
+		rplStr = ERR_ALREADYREGISTRED(USER);
 		return ;
 	}
 }
 
 void	User::execute()
 {
-	if (respStr != NORESP)
+	if (rplStr != NORESP)
 		return ;
-	
+
 	client.setUsername(args[1]);
 
 	if (!client.getNickname().empty())
-		respStr = RPL_WELCOME(client.getNickname(), client.getUsername(), client.getHostname());
+		rplStr = RPL_WELCOME(client.getNickname(), client.getUsername(), client.getHostname());
 }
 
 void	User::resp()
 {
-	client << respStr;
+	client << rplStr;
 }
 
 

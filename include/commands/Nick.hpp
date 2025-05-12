@@ -5,7 +5,7 @@
 # define AT '@'
 # define HASH '#'
 # define AND '&'
-# define ETCDOTS std::string("")
+# define COLON ':'
 
 class Nick : public ACommand
 {
@@ -20,7 +20,7 @@ class Nick : public ACommand
 		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 
 	private:
-		bool	isNickErroneous(const char *nick);
+		bool	isErroniousNick(const char *nick);
 };
 
 #endif

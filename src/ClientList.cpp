@@ -53,6 +53,7 @@ void	ClientList::remove(int fd)
 	}
 }
 
+// returns matching client if present; the last client if not
 Client	&ClientList::getClientByFd(int fd)
 {
 	std::size_t	i;

@@ -13,7 +13,7 @@ class ACommand
 		Client		&client;
 		char		**args;
 		int			argc;
-		std::string	respStr;
+		std::string	rplStr;
 
 	public:
 		ACommand(Server &server, Client &client, char **args, int argc);

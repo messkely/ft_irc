@@ -26,13 +26,16 @@ class Server
         void    	launch();
 		std::string	getPasswd();
 		Client		&getClientByNickname(std::string nickname);
+		Client		&getClientByFd(int fd);
 		bool		isNicknameTaken(std::string nickname);
+
 		// channel management
 		Channel*	getChannel(const std::string& name);
 		void		addChannel(const std::string& name, Channel* channel);
 		void		removeChannel(const std::string& name, Channel* channel);
 
 	private:
+		void		listenForEvents(const std::vector <pollfd> &lst);
         void		acceptCnt();
 		void		closeCnt(const Client &client);
 		void		handleClientInReady(Client &client);

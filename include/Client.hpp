@@ -14,8 +14,8 @@ class Client
 		bool				isRejected;
 		bool				hasAuthed;
 		bool				isAccepted;
-		std::stringstream	rdbuf;
-		std::stringstream	wrbuf;
+		std::stringstream	msgBuf;
+		std::stringstream	rplBuf;
 	public:
 		Client();
 		Client(int fd, std::string hostname, bool passwdBased);
@@ -37,13 +37,12 @@ class Client
 		void				setHasAuthed(bool status);
 		bool				getIsAccepted();
 		void				setIsAccepted(bool status);
+		bool				isRegistered();
 		std::string			&operator >> (std::string &line);
-		const std::ostream	&operator << (const std::string &respStr);
-		ssize_t				recvData();
-		void				sendData();
+		const std::ostream	&operator << (const std::string &rplStr);
+		ssize_t				recvMessages();
+		void				sendReplies();
 		bool				readyToSend();
-
-		friend std::ostream	&operator << (std::ostream &os, Client &client);
 };
 
 #endif

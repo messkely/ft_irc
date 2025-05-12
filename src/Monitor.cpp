@@ -29,15 +29,26 @@ Monitor	&Monitor::operator = (const Monitor &rhs)
 	return (*this);
 }
 
-//adds fd to be monitored for events
-void	Monitor::add(int fd, short events)
+void	Monitor::add(int fd)
 {
 	pollfd	pfd;
 
 	pfd.fd = fd;
-	pfd.events = events;
 	
 	pfds.push_back(pfd);
+}
+
+// sets fd to be monitored for events
+void	Monitor::setEvents(int fd, short events)
+{
+	for (size_t i = 0; i < pfds.size(); i++)
+	{
+		if (fd == pfds[i].fd)
+		{
+			pfds[i].events = events;
+			return ;
+		}
+	}
 }
 
 void	Monitor::remove(int fd)
@@ -55,10 +66,7 @@ void	Monitor::remove(int fd)
 // sleep until at least one fd is ready
 void	Monitor::listen()
 {
-	readyFds = 0;
-
-	while (readyFds != -1 && readyFds == 0)
-		readyFds = poll(pfds.data(), pfds.size(), TIMEOUT);
+	readyFds = poll(pfds.data(), pfds.size(), -1);
 
 	if (readyFds == -1)
 		rtimeThrow("poll");

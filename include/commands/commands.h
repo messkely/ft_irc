@@ -10,9 +10,10 @@
 # include "Part.hpp"
 # include "Kick.hpp"
 # include "Topic.hpp"
+# include "Quit.hpp"
 
 // utils
-#  define CMDS_N 8
+#  define CMDS_N 9
 #  define NORESP ""
 
 // names
@@ -24,10 +25,12 @@
 #  define PART "PART"
 #  define TOPIC "TOPIC"
 #  define KICK "KICK"
+#  define QUIT "QUIT"
 
 // args number (cmd name included)
 # define PASS_ARGS_N 2
 # define NICK_ARGS_N 2
 # define USER_ARGS_N 5
+# define QUIT_ARGS_N 2
 
 #endif

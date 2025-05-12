@@ -26,7 +26,7 @@ void Part::parse()
 {
 	if (argc < 2 || !args || !args[1])
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 
@@ -36,7 +36,7 @@ void Part::parse()
 	{
 		if (chan.empty() || (chan[0] != '#' && chan[0] != '&') || chan.find(' ') != std::string::npos)
 		{
-			respStr = NORESP;
+			rplStr = NORESP;
 			return;
 		}
 		channelNames.push_back(chan);
@@ -57,14 +57,14 @@ void Part::parse()
 			reason.erase(0, 1);
 	}
 
-	respStr = NORESP;
+	rplStr = NORESP;
 }
 
 
 
 void Part::execute()
 {
-	if (respStr != NORESP)
+	if (rplStr != NORESP)
 		return;
 
 	for (size_t i = 0; i < channelNames.size(); ++i)

@@ -24,7 +24,7 @@ void Kick::parse()
 {
 	if (argc != 2 || !args || !args[1] || args[1][0] != '#')
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 	for (int i = 1; args[1][i]; i++)
@@ -32,12 +32,12 @@ void Kick::parse()
 		if (!(args[1][i]) || args[1][i] == ' ')
 		{
 			std::cout << args[1][i] << std::endl;
-			respStr = NORESP;
+			rplStr = NORESP;
 			return;
 		}
 	}
 	channelName = args[1];
-	respStr = NORESP;
+	rplStr = NORESP;
 }
 
 void Kick::execute()

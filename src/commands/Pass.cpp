@@ -19,19 +19,19 @@ void	Pass::parse()
 
 	if (argc < PASS_ARGS_N)
 	{
-		respStr = ERR_NEEDMOREPARAMS(PASS);
+		rplStr = ERR_NEEDMOREPARAMS(PASS);
 		return ;
 	}
 
 	if (client.getIsAccepted())
 	{
-		respStr = ERR_ALREADYREGISTRED(PASS);
+		rplStr = ERR_ALREADYREGISTRED(PASS);
 		return ;
 	}
 
 	if (server.getPasswd() != args[1])
 	{
-		respStr = ERR_PASSWDMISMATCH(client.getNickname());
+		rplStr = ERR_PASSWDMISMATCH(PASS);
 		return ;
 	}
 
@@ -45,7 +45,7 @@ void	Pass::execute()
 
 void	Pass::resp()
 {
-	client << respStr;
+	client << rplStr;
 }
 
 
