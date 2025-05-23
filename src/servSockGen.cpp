@@ -37,7 +37,7 @@ int	getBoundSock(addrinfo *res)
 		{
 			close(fd);
 			continue ;
-		}	
+		} 
 
 		if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1 ||
 			bind(fd, p->ai_addr, p->ai_addrlen) == -1)
@@ -66,7 +66,7 @@ addrinfo	*getaddrList(const char *port)
 	int			gaiStatus;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 

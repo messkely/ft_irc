@@ -1,0 +1,48 @@
+% JOIN
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+			
+		!!	FAILURE
+			
+	
+% PART
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+			
+		!!	FAILURE
+			
+% TOPIC
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+			
+		!!	FAILURE
+			
+% INVITE
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+			
+		!!	FAILURE
+			
+% MODE
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+			
+		!!	FAILURE
+			
+% PRIVMSG
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+			
+		!!	FAILURE
+			
+% KICK
+	# general syntax 
+	- PERFORMED TESTS
+		! 	SUCCESS
+		!!	FAILURE

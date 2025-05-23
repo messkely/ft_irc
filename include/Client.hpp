@@ -38,6 +38,7 @@ class Client
 		bool				getIsAccepted();
 		void				setIsAccepted(bool status);
 		bool				isRegistered();
+		std::string			getPrefix() const;
 		std::string			&operator >> (std::string &line);
 		const std::ostream	&operator << (const std::string &rplStr);
 		ssize_t				recvMessages();

@@ -32,7 +32,9 @@ class Server
 		// channel management
 		Channel*	getChannel(const std::string& name);
 		void		addChannel(const std::string& name, Channel* channel);
-		void		removeChannel(const std::string& name, Channel* channel);
+		void		removeChannel(const std::string& name);
+		std::vector<Channel*>& getChannels();
+		void 		leaveAllChannels(int fd);
 
 	private:
 		void		listenForEvents(const std::vector <pollfd> &lst);

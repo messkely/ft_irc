@@ -8,7 +8,7 @@ Pass::Pass(Server &server, Client &client, char **args, int argc)
 	std::cout << "Pass's Parametrized Constructor called\n";
 }
 
-Pass::~Pass() 
+Pass::~Pass()
 {
 	std::cout << "Pass's Destructor called\n";
 }

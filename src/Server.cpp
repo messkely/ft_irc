@@ -1,6 +1,5 @@
 #include "../include/Server.hpp"
 #include "../include/error.h"
-#include "../include/utils.h"
 #include "../include/servSock.h"
 #include "../include/utils.h"
 #include <iostream>
@@ -18,10 +17,10 @@ Server::Server(const char *port, const char *passwd)
 {
 	std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {PASS, NICK, USER, JOIN, MODE, PART, TOPIC, KICK, QUIT}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {PASS, NICK, USER, JOIN, MODE, PART, TOPIC, KICK, QUIT, PRIVMSG, INVITE}; // add command names here
 
 	cmdCreator	tmpCmdFactory[CMDS_N] =
-	{Pass::create, Nick::create, User::create, Join::create, Mode::create, Part::create, Topic::create, Kick::create, Quit::create}; // add factory methods here
+	{Pass::create, Nick::create, User::create, Join::create, Mode::create, Part::create, Topic::create, Kick::create, Quit::create, Privmsg::create, Invite::create}; // add factory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{
@@ -68,6 +67,11 @@ std::string	Server::getPasswd()
 	return (passwd);
 }
 
+bool	Server::isNicknameTaken(string nickname)
+{
+	return (getClientByNickname(nickname).getNickname() == nickname);
+}
+
 // returns matching client if present; the last client if not
 Client	&Server::getClientByNickname(string nickname)
 {
@@ -80,12 +84,8 @@ Client	&Server::getClientByFd(int fd)
 	return (clients.getClientByFd(fd));
 }
 
-bool	Server::isNicknameTaken(string nickname)
-{
-	return (getClientByNickname(nickname).getNickname() == nickname);
-}
-
 // channel management
+
 Channel	*Server::getChannel(const std::string& name)
 {
 	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
@@ -102,20 +102,43 @@ void Server::addChannel(const std::string& name, Channel* channel)
 		channels.push_back(channel);
 }
 
-void Server::removeChannel(const std::string& name, Channel* channel)
+void Server::removeChannel(const std::string& name)
 {
-	if (!getChannel(name))
+	Channel *channel = getChannel(name);
+	if (channel)
 	{
     	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
     	{
     	    if (*it == channel)
     	    {
-    	        delete *it;
+    	        delete channel;
     	        channels.erase(it);
     	        break;
     	    }
     	}
 	}
+}
+
+std::vector<Channel*>& Server::getChannels()
+{
+    return (channels);
+}
+
+void Server::leaveAllChannels(int fd)
+{
+	Client	&client = clients.getClientByFd(fd);
+	std::vector<Channel *> &allChans = getChannels();
+    for (size_t idx = 0; idx < allChans.size(); ++idx)
+    {
+        Channel *ch = allChans[idx];
+        if (ch->hasUser(client))
+        {
+            std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
+            ch->broadcast(client, partMsg);
+            ch->removeUser(client);
+        }
+    }
+    return;
 }
 
 

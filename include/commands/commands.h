@@ -11,9 +11,10 @@
 # include "Kick.hpp"
 # include "Topic.hpp"
 # include "Quit.hpp"
+# include "Invite.hpp"
+# include "Privmsg.hpp"
 
-// utils
-#  define CMDS_N 9
+#  define CMDS_N 11
 #  define NORESP ""
 
 // names
@@ -26,6 +27,8 @@
 #  define TOPIC "TOPIC"
 #  define KICK "KICK"
 #  define QUIT "QUIT"
+#  define INVITE "INVITE"
+#  define PRIVMSG "PRIVMSG"
 
 // args number (cmd name included)
 # define PASS_ARGS_N 2

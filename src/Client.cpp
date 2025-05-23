@@ -8,7 +8,7 @@
 #define RDLEN BUFLEN - 1
 #define CR '\r'
 #define CONNCLOSED 0
-#define MAX_RPLBUF_BYTES 5000 // 5 kb
+#define MAX_RPLBUF_BYTES 5000 // ~5 kb
 
 Client::Client()
 {
@@ -122,6 +122,12 @@ void	Client::setIsAccepted(bool status)
 bool	Client::isRegistered()
 {
 	return (!nickname.empty() && !username.empty());
+}
+
+
+std::string Client::getPrefix() const
+{
+    return (":" + nickname + "!~" + username + "@" + hostname);
 }
 
 // get a message from the input buffer

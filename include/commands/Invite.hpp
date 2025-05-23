@@ -1,30 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Part.hpp                                           :+:      :+:    :+:   */
+/*   Invite.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/10 10:00:51 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/22 21:07:33 by messkely         ###   ########.fr       */
+/*   Created: 2025/04/15 10:27:06 by messkely          #+#    #+#             */
+/*   Updated: 2025/04/29 19:54:03 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef Part_HPP
-# define Part_HPP
+#ifndef INVITE_HPP
+# define INVITE_HPP
 
 #include <iostream>
+#include <sstream>
 #include "ACommand.hpp"
 #include "../Channel.hpp"
 
-class Part : public ACommand
+class Invite : public ACommand
 {
 	private:
-		std::vector<std::string> channelNames;
-		std::string reason;
+		std::string nick;
+		std::string channelName;
 	public:
-		Part(Server &server, Client &client, char **args, int argc);
-		virtual ~Part();
+		Invite(Server &server, Client &client, char **args, int argc);
+		virtual ~Invite();
 
 		virtual void parse();
 		virtual void execute();

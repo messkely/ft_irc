@@ -30,7 +30,7 @@ void	Quit::execute()
 	for (int i = 1; i < argc; i++)
 		(msg += args[i]) += ' ';
 
-	rplStr = RPL_QUIT(client.getNickname(), client.getUsername(), client.getHostname(), QUIT, msg);
+	rplStr = RPL_QUIT(client.getNickname(), msg);
 }
 
 void	Quit::resp()
