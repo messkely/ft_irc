@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "replies.h"
 #include "Client.hpp"
 
 class Channel {

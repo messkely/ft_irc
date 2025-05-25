@@ -1,5 +1,5 @@
 #pragma once
-#define PREFIX ":IRCServ "
+#define PREFIX ":IRCServ " // replace with server IP ?
 #define LF "\n"
 
 //Errors :
@@ -48,6 +48,7 @@
 #define RPL_CHANGEMODE(hostname, channelname, mode)		":" + hostname + " MODE " + channelname + " " + mode + LF
 #define RPL_UMODEIS(hostname, channelname, mode, user)	":" + hostname + " MODE " + channelname + " " + mode + " " + user + LF
 #define RPL_MODE(channel, modes, params) 				": MODE " + channel + " " + modes + params + LF
+#define RPL_GIVEMODE(channel, target)					PREFIX "MODE " + channel + " +o " + target + LF
 #define RPL_KICK(prefix, channel, target, reason)		prefix + " KICK " + channel + " " + target + ((reason).empty() ? "" : (" :" + (reason))) + LF
 #define RPL_PART(prefix, channel, message)				prefix + " PART " + channel + ((message).empty() ? "" : (" :" + (message))) + LF
 #define RPL_CHANNELREMOVED(nick, channel) 				(PREFIX " NOTICE " + nick + " :Channel " + channel + " has been removed (no more users)." LF)

@@ -31,15 +31,34 @@ void Channel::addUser(Client& user, bool makeOp)
 
 void Channel::removeUser(Client& user)
 {
-    for (size_t i = 0; i < members.size(); ++i)
+	size_t len = members.size();
+	int OpCount = 0;
+	for (size_t i = 0; i < len; ++i)
+		if (members[i].isOp)
+			OpCount++;
+
+	for (size_t i = 0; i < len; ++i)
 	{
-        if (members[i].client == &user)
+		if (members[i].client == &user)
 		{
-            members.erase(members.begin() + i);
-            return;
-        }
-    }
-    std::cerr << "removeUser: not in channel " << name << "\n";
+			if (members[i].isOp && len > 1 && OpCount == 1)
+			{
+				(i == 0) ? members[i + 1].isOp = true : members[0].isOp = true;
+				broadcast(*(members[i].client), RPL_GIVEMODE(name, members[i + 1].client->getNickname()));
+			}
+			members.erase(members.begin() + i);
+			return;
+		}
+	}
+    // for (size_t i = 0; i < members.size(); ++i)
+	// {
+    //     if (members[i].client == &user)
+	// 	{
+    //         members.erase(members.begin() + i);
+    //         return;
+    //     }
+    // }
+    // std::cerr << "removeUser: not in channel " << name << "\n";
 }
 
 bool Channel::hasUser(Client& user) const

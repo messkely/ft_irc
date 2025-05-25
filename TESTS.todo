@@ -1,11 +1,22 @@
+# success indicates the server responds adequatly to message [ makes changes / sends replies]
+# failure indicates the server failes to respond adequetly to message [ no changes / makes incomplete changes / does not reply / missing replies]
+# if message placed in failure, a list of reasons must be supplied
+# the ; separator means the test requires more than a message
+# n(num) indicates a different client
+
 % JOIN
 	# general syntax 
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			JOIN
+			JOIN #
+			JOIN #& ; JOIN #plato ; JOIN &plato
+			JOIN pele
+
 		!!	FAILURE
-			
-	
+			JOIN #pele [missing RPL_TOPIC]
+			JOIN &pele [same as above]
+
 % PART
 	# general syntax 
 	- PERFORMED TESTS
