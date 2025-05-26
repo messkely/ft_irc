@@ -91,8 +91,7 @@ void Invite::execute()
 }
 
 void Invite::resp()
-{
-	// handle response
+{	
 	client << rplStr;
 }
 

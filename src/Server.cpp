@@ -111,7 +111,6 @@ void Server::removeChannel(const std::string& name)
     	{
     	    if (*it == channel)
     	    {
-				cerr << "removed channel " << name << endl;
     	        delete channel;
     	        channels.erase(it);
     	        break;
@@ -313,7 +312,7 @@ void	Server::procCmds(Client &client)
 	string		msg;
 	int			i;
 
-	client >> msg;
+	cerr << (client >> msg) << endl;
 
 	while (!msg.empty())
 	{

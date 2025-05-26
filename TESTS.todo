@@ -3,6 +3,7 @@
 # if message placed in failure, a list of reasons must be supplied
 # the ; separator means the test requires more than a message
 # n(num) indicates a different client
+# JOIN rule: ( <channel> *( "," <channel> ) [ <key> *( "," <key> ) ] ) / "0"
 
 % JOIN
 	# general syntax 
@@ -12,10 +13,31 @@
 			JOIN #
 			JOIN #& ; JOIN #plato ; JOIN &plato
 			JOIN pele
+			JOIN #pele ; JOIN #pele
+			n1 JOIN #pele ; n1 ctrl+c ; n2 JOIN #pele [n2 made operator]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 ctrl+c [n2 made operator]
+			n1 JOIN #pele ; n2 JOIN #plato ; n2 JOIN #pele ; n1 JOIN #plato ; n1 ctrl+c [n2 made operator for #pele]
+			n1 JOIN #pele/plato ; n2 JOIN #pele/plato ; n1 ctrl+c ; n2 ctrl+c ; n3 JOIN #pele/plato [n3 made operator for #pele/plato]
+			n1 JOIN #pele/plato ; n2 JOIN #pele/plato ; n3 JOIN #pele/plato ; n1/n2 ctrl+c ; [n3 made operator for #pele/plato]
+			n1 JOIN #pele,#plato ; n2 JOIN #pele,#plato ; n1 JOIN 0 [n2 made operator for #pele,#plato] ; n2 JOIN 0 [channels removed]
+			n1 JOIN #pele ; n2 PART #pele
+			JOIN # plato
+			JOIN                    #plato
+			JOIN #TABplato
+			JOIN #plato,,,,,,,,,,,#pele,,,,,,,,#enigma
+			JOIN #plato,#plato,#plato,#enigma,#enigma
+			JOIN #plato,#Plato,fasco
+			JOIN ,,,,,,,,,,,,,,,,,,,,,#pele
+			JOIN #pele,,,,,,,,,,,,,,,,,,,,,
+			JOIN #,#pele,#plato
+			JOIN 0,#plato
+			JOIN #JOIN
+			JOIN #pele key k k k
+			JOIN 0 0 0 0
+			JOIN #pele,pele,#
 
 		!!	FAILURE
-			JOIN #pele [missing RPL_TOPIC]
-			JOIN &pele [same as above]
+			n1 JOIN #pele ; n1 MODE #pele [missing RPL_CHANNELMODEIS (causes ERR_NEEDMOREPARAMS)]
 
 % PART
 	# general syntax 
@@ -23,7 +45,7 @@
 		! 	SUCCESS
 			
 		!!	FAILURE
-			
+
 % TOPIC
 	# general syntax 
 	- PERFORMED TESTS

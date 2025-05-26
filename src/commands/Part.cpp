@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 10:04:53 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/29 19:31:46 by messkely         ###   ########.fr       */
+/*   Updated: 2025/05/07 11:57:54 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,7 @@
 
 Part::Part(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
-{
-}
+{}
 
 Part::~Part()
 {}
@@ -29,16 +28,18 @@ void Part::parse()
 		return ;
 	}
 
-	std::stringstream ss(args[1]);
-	std::string chan;
-	while (std::getline(ss, chan, ','))
+	// Split channel names
+	std::stringstream ssChannels(args[1]);
+	std::string channel;
+	while (std::getline(ssChannels, channel, ','))
 	{
-		if (chan.empty() || (chan[0] != '#' && chan[0] != '&'))
+		if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
 		{
-			rplStr = ERR_NOTEXTTOSEND();
+			rplStr = ERR_NOSUCHCHANNEL(channel);
 			return;
 		}
-		channelNames.push_back(chan);
+		if (!channel.empty())
+			channelNames.push_back(channel);
 	}
 
 	if (argc > 2)
@@ -68,27 +69,24 @@ void Part::execute()
 	for (size_t i = 0; i < channelNames.size(); ++i)
 	{
 		std::string& name = channelNames[i];
-		Channel* chan = server.getChannel(name);
+		Channel* ch = server.getChannel(name);
 
-		if (!chan)
+		if (!ch)
 		{
 			rplStr += ERR_NOSUCHCHANNEL(name);
 			continue;
 		}
-		if (!chan->hasUser(client))
+		if (!ch->hasUser(client))
 		{
 			rplStr += ERR_NOTONCHANNEL(client.getNickname(), name);
 			continue;
 		}
 		std::string tmpMsg = RPL_PART(client.getPrefix(), name, reason);
-		chan->broadcast(client, tmpMsg);
+		ch->broadcast(client, tmpMsg);
 		rplStr += tmpMsg;
-		chan->removeUser(client);
-		if (chan->getClientCount() < 1)
-		{
-			rplStr += RPL_CHANNELREMOVED(client.getNickname(), name);
+		ch->removeUser(client);
+		if (ch->getClientCount() < 1)
 			server.removeChannel(name);
-		}
 	}
 }
 

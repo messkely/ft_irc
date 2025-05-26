@@ -50,15 +50,6 @@ void Channel::removeUser(Client& user)
 			return;
 		}
 	}
-    // for (size_t i = 0; i < members.size(); ++i)
-	// {
-    //     if (members[i].client == &user)
-	// 	{
-    //         members.erase(members.begin() + i);
-    //         return;
-    //     }
-    // }
-    // std::cerr << "removeUser: not in channel " << name << "\n";
 }
 
 bool Channel::hasUser(Client& user) const

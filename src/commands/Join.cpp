@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/06 18:24:10 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/29 21:19:49 by messkely         ###   ########.fr       */
+/*   Updated: 2025/05/09 11:39:44 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,18 +15,23 @@
 
 Join::Join(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
-{
-}
+{}
 
 Join::~Join()
-{
-}
+{}
 
 void Join::parse()
 {
+
 	if (argc < 2)
 	{
-		rplStr = ERR_NEEDMOREPARAMS((std::string)JOIN);
+		rplStr = ERR_NEEDMOREPARAMS(JOIN);
+		return;
+	}
+
+	if (argc > 3 || (std::string(args[1]) == "0" && argc != 2))
+	{
+		rplStr = ERR_SYNTAXERR(JOIN);
 		return;
 	}
 
@@ -35,7 +40,6 @@ void Join::parse()
 	{
 		channelNames.clear();
 		channelNames.push_back("0");
-		rplStr = NORESP;
 		return;
 	}
 
@@ -44,12 +48,13 @@ void Join::parse()
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
 	{
-		if ((channel[0] != '#' && channel[0] != '&') || channel.length() <= 1)
-		{
-			rplStr = ERR_NOSUCHCHANNEL(channel);
-			return;
-		}
-		channelNames.push_back(channel);
+		// if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
+		// {
+		// 	rplStr = ERR_NOSUCHCHANNEL(channel);
+		// 	return;
+		// }
+		if (!channel.empty())
+			channelNames.push_back(channel);
 	}
 
 	// check channels
@@ -79,18 +84,7 @@ void Join::execute()
 	// JOIN 0: part all channels
 	if (channelNames.size() == 1 && channelNames[0] == "0")
 	{
-		std::vector<Channel *> &allChans = server.getChannels();
-		for (size_t idx = 0; idx < allChans.size(); ++idx)
-		{
-			Channel *ch = allChans[idx];
-			if (ch->hasUser(client))
-			{
-				ch->removeUser(client);
-				std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
-				rplStr += partMsg;
-				ch->broadcast(client, partMsg);
-			}
-		}
+		server.leaveAllChannels(client.getSockfd());
 		return;
 	}
 
@@ -99,6 +93,13 @@ void Join::execute()
 		const std::string &name = channelNames[i];
 		const std::string key = i < channelKeys.size() ? channelKeys[i] : "";
 		Channel *ch = server.getChannel(name);
+
+		// check name syntax
+		if ((name[0] != '#' && name[0] != '&') || name.length() == 1)
+		{
+			rplStr += ERR_NOSUCHCHANNEL(name);
+			continue;
+		}
 
 		if (!ch)
 		{
@@ -110,19 +111,21 @@ void Join::execute()
 			std::string joinMsg = RPL_JOIN(client.getPrefix(), name);
 			rplStr += joinMsg;
 			ch->broadcast(client, joinMsg);
+			rplStr += RPL_NOTOPIC(client.getNickname(), ch->getName());
 
 			// 2) names list
 			rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
 			rplStr += RPL_ENDOFNAMES(client.getNickname(), name);
 			continue;
 		}
-		else
+
+		// key check
+		if (!ch->getPassword().empty() && !client.getIsInvited())
 		{
-			// key check
-			if (!key.empty() && key != ch->getPassword())
+			if ((!ch->getPassword().empty() && key.empty()) || (!key.empty() && key != ch->getPassword()))
 			{
-				rplStr = ERR_BADCHANNELKEY(client.getNickname(), name);
-				return;
+				rplStr += ERR_BADCHANNELKEY(client.getNickname(), name);
+				continue;
 			}
 		}
 
@@ -131,10 +134,10 @@ void Join::execute()
 			continue;
 
 		// invite-only?
-		if (ch->isInviteOnly())
+		if (ch->isInviteOnly() && !client.getIsInvited())
 		{
-			rplStr = ERR_INVITEONLYCHAN(client.getNickname(), name);
-			return;
+			rplStr += ERR_INVITEONLYCHAN(client.getNickname(), name);
+			continue;
 		}
 
 		// user limit (count spaces+1 in name list)
@@ -148,7 +151,7 @@ void Join::execute()
 			if (count >= ch->getUserLimit())
 			{
 				rplStr = ERR_CHANNELISFULL(client.getNickname(), name);
-				return;
+				continue;
 			}
 		}
 
@@ -160,6 +163,7 @@ void Join::execute()
 		rplStr += joinMsg;
 		ch->broadcast(client, joinMsg);
 		// 2) names list
+		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(client.getNickname(), ch->getName()) : rplStr += RPL_TOPIC(client.getNickname(), ch->getName(), ch->getTopic());
 		rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
 		rplStr += RPL_ENDOFNAMES(client.getNickname(), name);
 	}

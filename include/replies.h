@@ -29,6 +29,7 @@
 #define ERR_BADCHANNELKEY(client, channel)				"475 " + client + " " + channel + " :Cannot join channel (+k)" LF
 #define ERR_CHANOPRIVSNEEDED(nick, channel)				"482 " + nick + " " + channel + " :You're not channel operator" LF
 #define ERR_NEEDMODEPARM(channelname, mode)				"696 " + channelname + " * You must specify a parameter for the key mode. " + mode + LF
+#define ERR_SYNTAXERR(command)							"461 " + std::string(command) + " :Syntax error" + LF
 #define ERR_UNKNOWNMODE(nickname, channelname, mode)	"472 " + nickname + " " + channelname + " " + mode + " :is not a recognized channel mode" + LF
 #define ERR_INVALIDMODEPARM(channelname, mode)			"696 " + channelname + " Invalid mode parameter. " + mode + LF
 
@@ -51,6 +52,5 @@
 #define RPL_GIVEMODE(channel, target)					PREFIX "MODE " + channel + " +o " + target + LF
 #define RPL_KICK(prefix, channel, target, reason)		prefix + " KICK " + channel + " " + target + ((reason).empty() ? "" : (" :" + (reason))) + LF
 #define RPL_PART(prefix, channel, message)				prefix + " PART " + channel + ((message).empty() ? "" : (" :" + (message))) + LF
-#define RPL_CHANNELREMOVED(nick, channel) 				(PREFIX " NOTICE " + nick + " :Channel " + channel + " has been removed (no more users)." LF)
 #define RPL_MSG(sender,msg)								PREFIX ":" + sender + " :" + msg + LF
 #define RPL_QUIT(nick, msg)								"ERROR :Closing connection: " + nick + " " + msg + LF

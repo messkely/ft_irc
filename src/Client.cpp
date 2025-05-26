@@ -12,25 +12,25 @@
 
 Client::Client()
 {
-	std::cout << "Client's Default Constructor called\n";
+	// std::cout << "Client's Default Constructor called\n";
 }
 
 Client::Client(int fd, std::string hostname, bool passwdBased)
 	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(false), isAccepted(!passwdBased)
 {
-	std::cout << "Client's Parametrized Constructor called\n";
+	// std::cout << "Client's Parametrized Constructor called\n";
 }
 
 Client::Client(const Client &other) 
 {
-	std::cout << "Client's Copy Constructor called\n";
+	// std::cout << "Client's Copy Constructor called\n";
 
 	*this = other;
 }
 
 Client::~Client() 
 {
-	std::cout << "Client's Destructor called\n";
+	// std::cout << "Client's Destructor called\n";
 }
 
 
@@ -119,6 +119,16 @@ void	Client::setIsAccepted(bool status)
 	isAccepted = status;
 }
 
+bool	Client::getIsInvited()
+{
+	return (isInvited);
+}
+
+void	Client::setIsInvited(bool status)
+{
+	isInvited = status;
+}
+
 bool	Client::isRegistered()
 {
 	return (!nickname.empty() && !username.empty());
@@ -154,8 +164,8 @@ std::string	&Client::operator >> (std::string &line)
 // append reply to the output buffer
 const std::ostream	&Client::operator << (const std::string &rplStr)
 {
-	if (rplBuf.str().size() > MAX_RPLBUF_BYTES) // too many buffered replies indicating flooding
-		setIsRejected(true);
+	// if (rplBuf.str().size() > MAX_RPLBUF_BYTES) // too many buffered replies indicating flooding
+	// 	setIsRejected(true);
 
 	rplBuf << rplStr;
 
