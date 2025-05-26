@@ -1,44 +1,32 @@
 #include "../include/Server.hpp"
 #include "../include/error.h"
-#include "../include/utils.h"
 #include "../include/servSock.h"
 #include "../include/utils.h"
 #include <iostream>
 #include <unistd.h>
-#include <cstdio>
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <new>
 
 using namespace std;
 
-Server::Server()
-{
-	std::cout << "Server's Default Constructor called\n";
-}
-
-Server::Server(const char *port, const char *passwd) 
+Server::Server(const char *port, const char *passwd)
 	: servSock(getServSock(port)), passwd(passwd)
 {
 	std::cout << "Server's Parametrized Constructor called\n";
 
-	string	tmpCmdNames[CMDS_N] = {PASS, NICK, JOIN, MODE, PART, TOPIC}; // add command names here
+	string	tmpCmdNames[CMDS_N] = {PASS, NICK, USER, JOIN, MODE, PART, TOPIC, KICK, QUIT, PRIVMSG, INVITE}; // add command names here
 
-	cmdCreator	tmpCmdFactory[CMDS_N] = {Pass::create, Nick::create, Join::create, Mode::create, Part::create, Topic::create}; // add factory methods here
+	cmdCreator	tmpCmdFactory[CMDS_N] =
+	{Pass::create, Nick::create, User::create, Join::create, Mode::create, Part::create, Topic::create, Kick::create, Quit::create, Privmsg::create, Invite::create}; // add factory methods here
 
 	for (int i = 0; i < CMDS_N; i++)
 	{
 		cmdNames[i] = tmpCmdNames[i];
 		cmdFactory[i] = tmpCmdFactory[i];
 	}
-}
-
-Server::Server(const Server &other) 
-{
-	std::cout << "Server's Copy Constructor called\n";
-
-	*this = other;
 }
 
 Server::~Server() 
@@ -48,33 +36,21 @@ Server::~Server()
 	close(servSock);
 }
 
-
-Server    &Server::operator = (const Server &rhs) 
-{
-	(void)rhs;
-
-	return (*this);
-}
-
-std::string	Server::getPasswd()
-{
-	return (passwd);
-}
-
 void    Server::launch()
 {
-	monitor.add(servSock, POLLIN);
+	monitor.add(servSock);
 
 	while(true)
 	{
 		const vector<pollfd>	&lst = monitor.getList();
+		size_t					lstSize = lst.size(); // so that newly added fds aren't checked
 		int						fdsHandled = 0;
 
-		monitor.listen();
+		listenForEvents(lst);
 
-		for (std::size_t i = 0; i < lst.size(); i++)
+		for (size_t i = 0; i < lstSize; i++)
 		{
-			if (lst[i].revents & POLLIN || lst[i].revents & POLLOUT)
+			if (lst[i].revents & POLLIN || lst[i].revents & POLLOUT || lst[i].revents & POLLERR)
 			{
 				handleReadyFd(lst[i]);
 				fdsHandled++;
@@ -86,29 +62,165 @@ void    Server::launch()
 	}
 }
 
+std::string	Server::getPasswd()
+{
+	return (passwd);
+}
+
+bool	Server::isNicknameTaken(string nickname)
+{
+	return (getClientByNickname(nickname).getNickname() == nickname);
+}
+
+// returns matching client if present; the last client if not
+Client	&Server::getClientByNickname(string nickname)
+{
+	return (clients.getClientByNickname(nickname));
+}
+
+// returns matching client if present; the last client if not
+Client	&Server::getClientByFd(int fd)
+{
+	return (clients.getClientByFd(fd));
+}
+
+// channel management
+
+Channel	*Server::getChannel(const std::string& name)
+{
+	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->getName() == name)
+			return *it;
+	}
+	return (NULL);
+}
+
+void Server::addChannel(const std::string& name, Channel* channel)
+{
+	if (!getChannel(name))
+		channels.push_back(channel);
+}
+
+void Server::removeChannel(const std::string& name)
+{
+	Channel *channel = getChannel(name);
+	if (channel)
+	{
+    	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
+    	{
+    	    if (*it == channel)
+    	    {
+    	        delete channel;
+    	        channels.erase(it);
+    	        break;
+    	    }
+    	}
+	}
+}
+
+std::vector<Channel*>& Server::getChannels()
+{
+    return (channels);
+}
+
+void Server::leaveAllChannels(int fd)
+{
+	Client	&client = clients.getClientByFd(fd);
+	std::vector<Channel *> &allChans = getChannels();
+
+    for (size_t idx = 0; idx < allChans.size(); ++idx)
+    {
+        Channel *ch = allChans[idx];
+        if (ch->hasUser(client))
+        {
+            std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
+            ch->broadcast(client, partMsg);
+            ch->removeUser(client);
+			if (ch->getClientCount() < 1)
+			{
+				removeChannel(ch->getName());
+				--idx;
+			}
+        }
+    }
+
+    return;
+}
+
+
+// listen to all sockets, for recv ready
+// and only to those with non empty client replies buf, for send ready
+void	Server::listenForEvents(const vector <pollfd> &lst)
+{
+	int	fd;
+
+	for (size_t i = 0; i < lst.size(); i++)
+	{
+		fd = lst[i].fd;
+
+		if (fd == servSock || !getClientByFd(fd).readyToSend())
+			monitor.setEvents(fd, POLLIN);
+		else if (getClientByFd(fd).readyToSend() && getClientByFd(fd).getIsRejected())
+			monitor.setEvents(fd, POLLOUT);
+		else
+			monitor.setEvents(fd, POLLIN | POLLOUT);
+	}
+
+	monitor.listen();
+}
+
+static std::string	getIpStr(sockaddr_storage *addr)
+{
+	char	*ipStr = NULL;
+
+	if (addr->ss_family == AF_INET6)
+	{
+		sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
+		
+		return (inet_ntoa6(&ipv6->sin6_addr));
+	}
+
+	if (addr->ss_family == AF_INET)
+	{
+		sockaddr_in	*ipv4 = (sockaddr_in *)addr;
+
+		ipStr = inet_ntoa(ipv4->sin_addr);
+		if (!ipStr)
+			rtimeThrow("inet_ntoa");
+	}
+
+	return (ipStr);
+}
+
 void    Server::acceptCnt()
 {
-	int fd;
+	int 				fd;
+	sockaddr_storage	addr;
+	socklen_t			len = sizeof(addr);
 
-	if ((fd = accept(servSock, NULL, NULL)) == -1)
+	if ((fd = accept(servSock, (sockaddr *)&addr, &len)) == -1)
 		rtimeThrow("accept");
 
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		rtimeThrow("fcntl");
 
-	monitor.add(fd, POLLIN | POLLOUT);
-	clients.add(fd, !getPasswd().empty());
+	monitor.add(fd);
+	clients.add(fd, getIpStr(&addr), !getPasswd().empty());
 }
 
 void	Server::closeCnt(const Client &client)
 {
-		monitor.remove(client.getSockfd());
-		clients.remove(client.getSockfd());
+	int	fd = client.getSockfd();
+
+	monitor.remove(fd);
+	leaveAllChannels(fd);
+	clients.remove(fd);
 }
 
 void	Server::handleClientInReady(Client &client)
 {
-	int closed = !(client.recvData());
+	int closed = !(client.recvMessages());
 
 	if (closed) // connection closed
 	{
@@ -121,9 +233,8 @@ void	Server::handleClientInReady(Client &client)
 
 void	Server::handleClientOutReady(Client &client)
 {
-	// check if buffer not empty to call sendData
 	if (client.readyToSend())
-		client.sendData();
+		client.sendReplies();
 }
 
 void	Server::handleReadyFd(const pollfd &pfd)
@@ -133,8 +244,7 @@ void	Server::handleReadyFd(const pollfd &pfd)
 	if (pfd.revents & POLLOUT)
 	{
 		handleClientOutReady(client);
-
-		// close after wrbuf flush
+		// close after rplBuf flush
 		if (client.getIsRejected())
 			closeCnt(client);
 	}
@@ -146,20 +256,31 @@ void	Server::handleReadyFd(const pollfd &pfd)
 		else
 			handleClientInReady(client);
 	}
+
+	if (pfd.revents & POLLERR)
+		closeCnt(client);
 }
 
-// returns false if client validated server passwd or still in validation phase
-// ;true otherwise
-static bool	isClientRejected(Client &client, string cmdName)
+// returns true if command sent before registration or authentication
+// ;false otherwise
+static bool	isCommandDropped(Client &client, string cmdName)
 {
 	if (cmdName != PASS && !client.getIsAccepted() && !client.getHasAuthed())
 	{
+		client << ERR_CLIENTREJECTED();
 		client.setIsRejected(true);
 		return (true);
 	}
 
 	if (cmdName != PASS && !client.getIsAccepted())
 		client.setIsAccepted(true);
+
+	if (cmdName != PASS && cmdName != USER && cmdName != NICK
+		&& !client.isRegistered())
+	{
+		client << ERR_NOTREGISTERED(cmdName);
+		return (true);
+	}
 
 	return (false);
 }
@@ -178,61 +299,37 @@ void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &clien
 	delete cmd;
 }
 
+static void	handleUnknownCommand(Client &client, string msg)
+{
+	char	**args = splitMsg(msg.c_str(), SPACE);
+
+	client << ERR_UNKNOWNCOMMAND(client.getNickname(), args[0]);
+}
+
 // process messages (i.e CRLF terminated lines) stored in client buffer
 void	Server::procCmds(Client &client)
 {
 	string		msg;
+	int			i;
 
 	cerr << (client >> msg) << endl;
 
 	while (!msg.empty())
 	{
-		for (int i = 0; i < CMDS_N; i++)
+		for (i = 0; i < CMDS_N; i++)
 		{
-			if (!msgHasCommand(msg, cmdNames[i]))
-				continue ;
+			if (msgHasCommand(msg, cmdNames[i]))
+			{
+				if (!isCommandDropped(client, cmdNames[i]))
+					runCommandLifeCycle(cmdFactory[i], msg, client);
 
-			if (isClientRejected(client, cmdNames[i]))
-				return ;
-
-			runCommandLifeCycle(cmdFactory[i], msg, client);
-
-			break ;
+				break ;
+			}
 		}
 
+		if (i == CMDS_N)
+			handleUnknownCommand(client, msg);
+
 		client >> msg;
-	}
-}
-
-// channel management
-Channel	*Server::getChannel(const std::string& name)
-{
-	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
-	{
-		if ((*it)->getName() == name)
-			return *it;
-	}
-	return (NULL);
-}
-
-void Server::addChannel(const std::string& name, Channel* channel)
-{
-	if (!getChannel(name))
-		channels.push_back(channel);
-}
-
-void Server::removeChannel(const std::string& name, Channel* channel)
-{
-	if (!getChannel(name))
-	{
-    	for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it)
-    	{
-    	    if (*it == channel)
-    	    {
-    	        delete *it;
-    	        channels.erase(it);
-    	        break;
-    	    }
-    	}
 	}
 }

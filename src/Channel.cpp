@@ -6,237 +6,147 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/05 12:05:55 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/11 13:14:10 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/29 12:40:36 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Channel.hpp"
 
-Channel::Channel(const std::string &_name) : name(_name)
+Channel::Channel(const std::string& nm)
+  : name(nm), userLimit(0), inviteOnly(false), topicLocked(false)
 {}
 
-// user management
-bool Channel::hasUser(Client *user)
+// — Member management — 
+void Channel::addUser(Client& user, bool makeOp)
 {
-	for (std::vector<Client *>::iterator it = users.begin(); it != users.end(); ++it)
+    // skip dupes
+    for (size_t i = 0; i < members.size(); ++i)
 	{
-		if (*it == user)
-			return true;
-	}
-	return (false);
+        if (members[i].client == &user)
+            return;
+    }
+	//  members.insert(members.begin(), Member(&user, makeOp));
+    members.push_back(Member(&user, makeOp));
 }
 
-void Channel::addUser(Client *user)
+void Channel::removeUser(Client& user)
 {
-	if (!hasUser(user))
-		users.push_back(user);
-	else
-		std::cerr << "User already in [" << name << "] channel.\n";
-}
+	size_t len = members.size();
+	int OpCount = 0;
+	for (size_t i = 0; i < len; ++i)
+		if (members[i].isOp)
+			OpCount++;
 
-void Channel::removeUser(Client *user)
-{
-	if (hasUser(user))
+	for (size_t i = 0; i < len; ++i)
 	{
-		for (std::vector<Client *>::iterator it = users.begin(); it != users.end();)
+		if (members[i].client == &user)
 		{
-			if (*it == user)
-				it = users.erase(it);
-			else
-		        ++it;
+			if (members[i].isOp && len > 1 && OpCount == 1)
+			{
+				(i == 0) ? members[i + 1].isOp = true : members[0].isOp = true;
+				broadcast(*(members[i].client), RPL_GIVEMODE(name, members[i + 1].client->getNickname()));
+			}
+			members.erase(members.begin() + i);
+			return;
 		}
 	}
-	else
-		std::cerr << "user is not found in [" << name << "] channel!\n";
 }
 
-Client *Channel::findUser(const std::string &username)
+bool Channel::hasUser(Client& user) const
 {
-	for (std::vector<Client *>::iterator it = users.begin(); it != users.end(); ++it)
+    for (size_t i = 0; i < members.size(); ++i)
+        if (members[i].client == &user)
+            return true;
+    return false;
+}
+
+Client& Channel::findUser(const std::string& nick) const
+{
+    for (size_t i = 0; i < members.size(); ++i)
+        if (members[i].client->getNickname() == nick)
+            return *members[i].client;
+    return (*members.back().client);
+}
+
+// — Operator management — 
+void Channel::setOp(Client& user)
+{
+    for (size_t i = 0; i < members.size(); ++i)
 	{
-		if ((*it)->getNickname() == username)
-			return (*it);
-	}
-	throw std::runtime_error("User not found");
-}
-
-// operator management
-void Channel::addOperator(Client *user)
-{
-	if (!hasOperator(user))
-		operators.push_back(user);
-	else
-		std::cerr << "operator already in [" << name << "] channel.\n";
-}
-
-void Channel::removeOperator(Client *user)
-{
-	if (hasOperator(user))
-	{
-		for (std::vector<Client *>::iterator it = operators.begin(); it != operators.end();)
+        if (members[i].client == &user)
 		{
-			if (*it == user)
-				it = operators.erase(it);
-			// else
-		    //     ++it;
-		}
-	}
-	else
-		std::cerr << "operator is not found in [" << name << "] channel!\n";
+            members[i].isOp = true;
+            return;
+        }
+    }
+    // if not a member yet, add as op
+    // addUser(user, true);
 }
 
-bool Channel::hasOperator(Client *user)
+void Channel::unsetOp(Client& user)
 {
-	for (std::vector<Client *>::iterator it = operators.begin(); it != operators.end(); ++it)
+    for (size_t i = 0; i < members.size(); ++i)
 	{
-		if (*it == user)
-			return true;
-	}
-	return (false);
+        if (members[i].client == &user)
+		{
+            members[i].isOp = false;
+            return;
+        }
+    }
 }
 
-Client *Channel::findOperator(const std::string &username)
+bool Channel::isOp(Client& user) const
 {
-	for (std::vector<Client *>::iterator it = operators.begin(); it != operators.end(); ++it)
+    for (size_t i = 0; i < members.size(); ++i)
 	{
-		if ((*it)->getNickname() == username)
-			return (*it);
-	}
-	throw std::runtime_error("Operator not found");
+        if (members[i].client == &user)
+            return members[i].isOp;
+    }
+    return false;
 }
 
-// Modes
-void Channel::setInvitOnly(bool enabled)
+// — Modes — 
+void Channel::setInviteOnly(bool on)   { inviteOnly  = on; }
+void Channel::setTopicLocked(bool on)  { topicLocked = on; }
+void Channel::setPassword(const std::string& pw) { password = pw; }
+void Channel::removePassword()         { password.clear(); }
+void Channel::setUserLimit(size_t lim) { userLimit = lim; }
+void Channel::removeUserLimit()        { userLimit = 0; }
+void Channel::changeOpToUser(Client& user) { unsetOp(user); }
+void Channel::changeUserToOp(Client& user) { setOp(user); }
+
+// — Messaging — 
+void Channel::broadcast(Client& sender, const std::string& msg) const
 {
-	if (inviteOnly != enabled)
+	(void)sender;
+    for (size_t i = 0; i < members.size(); ++i)
 	{
-		inviteOnly = enabled;
-		if (inviteOnly)
-			std::cerr << "mode/" << name << " [+i]\n";
-		else
-			std::cerr << "mode/" << name << " [-i]\n";
-	}
+        Client* dst = members[i].client;
+        if (dst != &sender)
+            *dst << msg;
+    }
 }
 
-void Channel::setTopicLocked(bool enabled)
+void Channel::setTopic(const std::string& t) { topic = t; }
+
+// — Getters — 
+const std::string& Channel::getName()       const { return name; }
+const std::string& Channel::getTopic()      const { return topic; }
+const std::string& Channel::getPassword()   const { return password; }
+size_t             Channel::getUserLimit()  const { return userLimit; }
+bool               Channel::isInviteOnly()  const { return inviteOnly; }
+bool               Channel::isTopicLocked() const { return topicLocked; }
+
+std::string Channel::getUserListStr() const
 {
-	if (topicLocked != enabled)
+    std::string out;
+    for (size_t i = 0; i < members.size(); ++i)
 	{
-		topicLocked = enabled;
-		if (inviteOnly)
-			std::cerr << "mode/" << name << " [+t]\n";
-		else
-			std::cerr << "mode/" << name << " [-t]\n";
-	}
+        if (members[i].isOp) out += "@";
+        out += members[i].client->getNickname();
+        if (i + 1 < members.size()) out += " ";
+    }
+    return out;
 }
 
-void Channel::setPassword(std::string pass)
-{
-	if (password != pass)
-	{
-		password = pass;
-		std::cerr << "mode/" << name << " [+k " << pass << "]\n";
-	}
-}
-
-void Channel::removePassword()
-{
-	if (!password.empty())
-	{
-		password.clear();
-		std::cerr << "mode/" << name << " [-k]\n";
-	}
-}
-
-void Channel::changeOpToUser(Client *user)
-{
-	// put the operator in the users vector
-	addUser(user);
-	// remove it from operators vector
-	removeOperator(user);
-	std::cerr << "mode/" << name << " [+o " << user->getNickname() << "]\n";
-}
-
-void Channel::changeUserToOp(Client *user)
-{
-	// put the user in the operator vector
-	addOperator(user);
-	// remove it from the users vector
-	removeUser(user);
-	std::cerr << "mode/" << name << " [-o " << user->getNickname() << "]\n";
-}
-
-void Channel::setUserLimit(size_t limit)
-{
-	if (userLimit > 0 && userLimit != limit)
-	{
-		userLimit = limit;
-		std::cerr << "mode/" << name << " [+l " << limit << "]\n";
-	}
-	// else
-	// 	std::cerr << "user limit is already exist.\n";
-}
-
-void Channel::removeUserLimit()
-{
-	if (userLimit != 0)
-	{
-		userLimit = 0;
-		std::cerr << "mode/" << name << " [-l]\n";
-	}
-	// else
-	// 	std::cerr << "user limit is already exist.\n";
-}
-
-// messaging
-void Channel::broadcast(std::string message, Client *sender)
-{
-	(void)message;
-	for (std::vector<Client *>::iterator it = users.begin(); it != users.end(); ++it)
-	{
-		if (*it == sender)
-			continue;
-		// send the message to other users
-	}
-}
-
-void Channel::setTopic(const std::string& _topic)
-{
-	topic = _topic;
-}
-
-// Getters
-std::string Channel::getName()
-{
-	return (name);
-}
-
-std::string Channel::getTopic()
-{
-	return (topic);
-}
-
-std::string Channel::getPassword()
-{
-	return password;
-}
-
-size_t	Channel::getUserLimit()
-{
-	return (userLimit);
-}
-bool	Channel::getInvitOnly()
-{
-	return (inviteOnly);
-}
-
-bool Channel::getTopicLocked()
-{
-	return (topicLocked);
-}
-
-
-std::vector<Client *> &Channel::getUsers()
-{
-	return users;
-}
+size_t Channel::getClientCount() const { return members.size(); }

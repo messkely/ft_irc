@@ -3,6 +3,8 @@
 # include <vector>
 # include <poll.h>
 
+# define TIMEOUT 500
+
 class Monitor
 {
 	private:
@@ -14,7 +16,8 @@ class Monitor
 		~Monitor();
 
 		Monitor						&operator = (const Monitor &rhs);
-		void						add(int fd, short events);
+		void						add(int fd);
+		void						setEvents(int fd, short events);
 		void						remove(int fd);
 		void						listen();
 		const std::vector<pollfd>	&getList();

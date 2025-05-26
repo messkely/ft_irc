@@ -37,7 +37,7 @@ int	getBoundSock(addrinfo *res)
 		{
 			close(fd);
 			continue ;
-		}	
+		} 
 
 		if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1 ||
 			bind(fd, p->ai_addr, p->ai_addrlen) == -1)

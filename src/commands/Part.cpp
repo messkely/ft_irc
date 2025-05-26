@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 10:04:53 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/11 16:53:38 by messkely         ###   ########.fr       */
+/*   Updated: 2025/05/07 11:57:54 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,32 +14,32 @@
 #include "../../include/Server.hpp"
 
 Part::Part(Server &server, Client &client, char **args, int argc)
-	: ACommand(PART, server, client, args, argc)
-{
-}
+	: ACommand(server, client, args, argc)
+{}
 
 Part::~Part()
-{
-}
+{}
 
 void Part::parse()
 {
-	if (argc < 2 || !args || !args[1])
+	if (argc < 2)
 	{
-		respStr = NORESP;
-		return;
+		rplStr = ERR_NEEDMOREPARAMS(PART);
+		return ;
 	}
 
-	std::stringstream ss(args[1]);
-	std::string chan;
-	while (std::getline(ss, chan, ','))
+	// Split channel names
+	std::stringstream ssChannels(args[1]);
+	std::string channel;
+	while (std::getline(ssChannels, channel, ','))
 	{
-		if (chan.empty() || (chan[0] != '#' && chan[0] != '&') || chan.find(' ') != std::string::npos)
+		if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
 		{
-			respStr = NORESP;
+			rplStr = ERR_NOSUCHCHANNEL(channel);
 			return;
 		}
-		channelNames.push_back(chan);
+		if (!channel.empty())
+			channelNames.push_back(channel);
 	}
 
 	if (argc > 2)
@@ -57,32 +57,36 @@ void Part::parse()
 			reason.erase(0, 1);
 	}
 
-	respStr = NORESP;
+	rplStr = NORESP;
 }
 
 
 
 void Part::execute()
 {
-	if (respStr != NORESP)
+	if (rplStr != NORESP)
 		return;
-
 	for (size_t i = 0; i < channelNames.size(); ++i)
 	{
 		std::string& name = channelNames[i];
-		Channel* chan = server.getChannel(name);
+		Channel* ch = server.getChannel(name);
 
-		if (!chan || !chan->hasUser(&client))
-			continue;
-		if (chan->hasOperator(&client))
-			chan->removeOperator(&client);
-		chan->removeUser(&client);
-		std::cout << client.getNickname() << " left channel [" << chan->getName() << "]\n";
-		if (chan->getUsers().empty())
+		if (!ch)
 		{
-			server.removeChannel(name, chan);
-			std::cout << "Channel [" << name << "] deleted (no more users).\n";
+			rplStr += ERR_NOSUCHCHANNEL(name);
+			continue;
 		}
+		if (!ch->hasUser(client))
+		{
+			rplStr += ERR_NOTONCHANNEL(client.getNickname(), name);
+			continue;
+		}
+		std::string tmpMsg = RPL_PART(client.getPrefix(), name, reason);
+		ch->broadcast(client, tmpMsg);
+		rplStr += tmpMsg;
+		ch->removeUser(client);
+		if (ch->getClientCount() < 1)
+			server.removeChannel(name);
 	}
 }
 
@@ -90,7 +94,7 @@ void Part::execute()
 
 void Part::resp()
 {
-	// handle response
+	client << rplStr;
 }
 
 ACommand *Part::create(Server &server, Client &client, char **args, int argc)

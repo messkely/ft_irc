@@ -3,40 +3,35 @@
 #include <iostream>
 
 Pass::Pass(Server &server, Client &client, char **args, int argc)
-	: ACommand(PASS, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {
 	std::cout << "Pass's Parametrized Constructor called\n";
 }
 
-Pass::~Pass() 
+Pass::~Pass()
 {
 	std::cout << "Pass's Destructor called\n";
-
-	for (int i = 0; args[i]; i++)
-		free(args[i]);
-	
-	free(args);
 }
 
 void	Pass::parse()
 {
 	client.setHasAuthed(false); // for multiple PASS sent case
 
-	if (argc < ARGS_N)
+	if (argc < PASS_ARGS_N)
 	{
-		respStr = ERR_NEEDMOREPARAMS(name);
+		rplStr = ERR_NEEDMOREPARAMS(PASS);
 		return ;
 	}
 
 	if (client.getIsAccepted())
 	{
-		respStr = ERR_ALREADYREGISTRED(client.getNickname());
+		rplStr = ERR_ALREADYREGISTRED(PASS);
 		return ;
 	}
 
 	if (server.getPasswd() != args[1])
 	{
-		respStr = ERR_PASSWDMISMATCH(client.getNickname());
+		rplStr = ERR_PASSWDMISMATCH(PASS);
 		return ;
 	}
 
@@ -45,14 +40,12 @@ void	Pass::parse()
 
 void	Pass::execute()
 {
-	if (respStr != NORESP)
-		return ;
-
+	// no changes to make for PASS
 }
 
 void	Pass::resp()
 {
-	client << respStr;
+	client << rplStr;
 }
 
 

@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/08 11:45:47 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/12 17:16:13 by messkely         ###   ########.fr       */
+/*   Updated: 2025/04/27 20:57:08 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Mode::Mode(Server &server, Client &client, char **args, int argc)
-	: ACommand(MODE, server, client, args, argc)
+	: ACommand(server, client, args, argc)
 {
 }
 
@@ -22,9 +22,9 @@ Mode::~Mode() {}
 
 void Mode::parse()
 {
-	if (argc < 2 || !args || !args[1] || !args[2])
+	if (argc < 3)
 	{
-		respStr = NORESP;
+		rplStr = ERR_NEEDMOREPARAMS((std::string)MODE);
 		return;
 	}
 
@@ -33,13 +33,13 @@ void Mode::parse()
 
 	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
 	{
-		respStr = NORESP;
+		rplStr = (std::string)ERR_NOTEXTTOSEND();
 		return;
 	}
 
 	if (modeArg.empty() || (modeArg[0] != '+' && modeArg[0] != '-'))
 	{
-		respStr = NORESP;
+		rplStr = ERR_INVALIDMODEPARM(channelName, modeArg);
 		return;
 	}
 	int paramIndex = 3;
@@ -55,7 +55,7 @@ void Mode::parse()
 		}
 		if (!isValidMode(ch))
 		{
-			respStr = NORESP;
+			rplStr = ERR_INVALIDMODEPARM(channelName, modeArg);
 			return;
 		}
 		std::string mparam = "";
@@ -64,7 +64,7 @@ void Mode::parse()
 		{
 			if (paramIndex >= argc || !args[paramIndex])
 			{
-				respStr = NORESP;
+				rplStr = ERR_NEEDMOREPARAMS((std::string)MODE);
 				return;
 			}
 			mparam = args[paramIndex];
@@ -72,18 +72,35 @@ void Mode::parse()
 		}
 		modeChanges.push_back(ModeChange(currentSign, ch, mparam));
 	}
-	respStr = NORESP;
+	rplStr = NORESP;
 }
 
 void Mode::execute()
 {
-	if (respStr !=NORESP)
+	if (rplStr != NORESP)
 		return;
+	rplStr.clear();
+	std::string modeString;
+	std::string modeParams;
+	Channel *ch = server.getChannel(channelName);
+	if (!ch)
+	{
+		rplStr = ERR_NOSUCHCHANNEL(channelName);
+		return;
+	}
 
-	Channel *channel = server.getChannel(channelName);
-	if (!channel)
+	if (!ch->hasUser(client) && !ch->isOp(client))
+	{
+		rplStr = ERR_NOTONCHANNEL(client.getNickname(), channelName);
 		return;
-	for (size_t i = 0; i < modeChanges.size(); i++)
+	}
+
+	if (ch->hasUser(client) && !ch->isOp(client))
+	{
+		rplStr = ERR_CHANOPRIVSNEEDED(client.getNickname(), channelName);
+		return;
+	}
+	for (size_t i = 0; i < modeChanges.size(); ++i)
 	{
 		ModeChange mc = modeChanges[i];
 		std::string modeOpt;
@@ -93,29 +110,34 @@ void Mode::execute()
 		switch (mc.mode)
 		{
 		case 'i':
-			isInvitOnly(channel, modeOpt, mc.param);
+			isInvitOnly(ch, modeOpt, mc.param);
 			break;
 		case 't':
-			isTopicLocked(channel, modeOpt, mc.param);
+			isTopicLocked(ch, modeOpt, mc.param);
 			break;
 		case 'k':
-			isPassword(channel, modeOpt, mc.param);
+			isPassword(ch, modeOpt, mc.param);
 			break;
 		case 'o':
-			isAssignPrivileges(channel, modeOpt, mc.param);
+			isAssignPrivileges(ch, modeOpt, mc.param);
 			break;
 		case 'l':
-			isUserLimit(channel, modeOpt, mc.param);
-			break;
-		default:
+			isUserLimit(ch, modeOpt, mc.param);
 			break;
 		}
+		modeString += mc.sign;
+		modeString += mc.mode;
+		if (!mc.param.empty())
+			modeParams += " " + mc.param;
 	}
+	std::string tmpStr = RPL_MODE(ch->getName(), modeString, modeParams);
+	ch->broadcast(client, tmpStr);
+	rplStr += tmpStr;
 }
 
 void Mode::resp()
 {
-	// handle response
+	client << rplStr;
 }
 
 ACommand *Mode::create(Server &server, Client &client, char **args, int argc)
@@ -129,59 +151,52 @@ bool Mode::isValidMode(char modeLetter)
 			modeLetter == 'k' || modeLetter == 'o' || modeLetter == 'l');
 }
 
-void Mode::isInvitOnly(Channel *channel, std::string option, std::string option_arg)
+void Mode::isInvitOnly(Channel *ch, std::string option, std::string option_arg)
 {
 	(void)option_arg;
 
 	if (option[0] == '-')
-		channel->setInvitOnly(false);
+		ch->setInviteOnly(false);
 	else
-		channel->setInvitOnly(true);
+		ch->setInviteOnly(true);
 }
 
-void Mode::isTopicLocked(Channel *channel, std::string option, std::string option_arg)
+void Mode::isTopicLocked(Channel *ch, std::string option, std::string option_arg)
 {
 	(void)option_arg;
 
 	if (option[0] == '-')
-		channel->setTopicLocked(false);
+		ch->setTopicLocked(false);
 	else
-		channel->setTopicLocked(true);
+		ch->setTopicLocked(true);
 }
 
-void Mode::isPassword(Channel *channel, std::string option, std::string option_arg)
+void Mode::isPassword(Channel *ch, std::string option, std::string option_arg)
 {
 	if (option[0] == '-')
-		channel->removePassword();
+		ch->removePassword();
 	else
-		channel->setPassword(option_arg);
+		ch->setPassword(option_arg);
 }
 
-void Mode::isAssignPrivileges(Channel *channel, std::string option, std::string option_arg)
+void Mode::isAssignPrivileges(Channel *ch, std::string option, std::string option_arg)
 {
-	try
-	{
-		if (option[0] == '-')
-			channel->changeOpToUser(channel->findUser(option_arg));
-		else
-			channel->changeUserToOp(channel->findOperator(option_arg));
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << e.what() << '\n';
-	}
+	if (option[0] == '-')
+		ch->changeOpToUser(ch->findUser(option_arg));
+	else
+		ch->changeUserToOp(ch->findUser(option_arg));
 }
 
-void Mode::isUserLimit(Channel *channel, std::string option, std::string option_arg)
+void Mode::isUserLimit(Channel *ch, std::string option, std::string option_arg)
 {
 	int limit = std::atoi(option_arg.c_str());
 	if (!limit)
 	{
-		respStr = NORESP;
+		rplStr = NORESP;
 		return;
 	}
 	if (option[0] == '-')
-		channel->removeUserLimit();
+		ch->removeUserLimit();
 	else
-		channel->setUserLimit(limit);
+		ch->setUserLimit(limit);
 }
