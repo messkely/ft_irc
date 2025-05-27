@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
     usrInpParse(argc, argv);
-    
+
     Server  server(argv[1], argv[2]);
 
     try

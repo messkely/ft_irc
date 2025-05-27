@@ -11,6 +11,7 @@
 		! 	SUCCESS
 			JOIN
 			JOIN #
+			JOIN #pele [topic sent upon joining]
 			JOIN #& ; JOIN #plato ; JOIN &plato
 			JOIN pele
 			JOIN #pele ; JOIN #pele
@@ -38,6 +39,7 @@
 
 		!!	FAILURE
 			n1 JOIN #pele ; n1 MODE #pele [missing RPL_CHANNELMODEIS (causes ERR_NEEDMOREPARAMS)]
+			n1 JOIN #pele ; n1 TOPIC #pele :aka malloc : n2 JOIN #pele [TOPIC reply wrong format]
 
 % PART
 	# general syntax 
@@ -52,7 +54,7 @@
 		! 	SUCCESS
 			
 		!!	FAILURE
-			
+			TOPIC :
 % INVITE
 	# general syntax 
 	- PERFORMED TESTS

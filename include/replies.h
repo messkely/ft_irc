@@ -38,8 +38,8 @@
 #define RPL_NAMREPLY(sender, channel, users)    		PREFIX "353 " + sender + " @ " + channel + " :" + users + LF
 #define RPL_ENDOFNAMES(sender, channel)        			PREFIX "366 " + sender + " " + channel + " :END of /NAMES list" LF
 #define RPL_MODE_OP(nick, user, host, channel) 			":" + nick + "!" + user + "@" + host + " MODE " + channel + " +o @" + nick + LF
-#define RPL_TOPIC(prefix, channel, topic) 				prefix + " TOPIC " + channel + " :" + topic + LF
-#define RPL_NOTOPIC(sender, channel) 					PREFIX "331 " + sender + " " + channel + " :No topic is set" + LF
+#define RPL_TOPIC(prefix, channel, topic) 				prefix + " 332" + " TOPIC " + channel + " :" + topic + LF
+#define RPL_NOTOPIC(channel) 							PREFIX + std::string("331") + " TOPIC " + channel + " :No topic is set" + LF
 #define RPL_PRIVMSG(sender, target, msg)				":" + sender + " PRIVMSG " + target + " :" + msg + LF 
 #define RPL_INVITING(nickname, targnick, targchan)  	": 341 " + nickname + " " + targnick + " " + targchan + LF
 #define RPL_INVITE(sender, target, channel)				":" + sender + " INVITE " + target + " " + channel + LF

@@ -111,7 +111,7 @@ void Join::execute()
 			std::string joinMsg = RPL_JOIN(client.getPrefix(), name);
 			rplStr += joinMsg;
 			ch->broadcast(client, joinMsg);
-			rplStr += RPL_NOTOPIC(client.getNickname(), ch->getName());
+			rplStr += RPL_NOTOPIC(ch->getName());
 
 			// 2) names list
 			rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
@@ -163,7 +163,7 @@ void Join::execute()
 		rplStr += joinMsg;
 		ch->broadcast(client, joinMsg);
 		// 2) names list
-		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(client.getNickname(), ch->getName()) : rplStr += RPL_TOPIC(client.getNickname(), ch->getName(), ch->getTopic());
+		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(name) : rplStr += RPL_TOPIC(client.getNickname(), ch->getName(), ch->getTopic());
 		rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
 		rplStr += RPL_ENDOFNAMES(client.getNickname(), name);
 	}

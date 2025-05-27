@@ -48,7 +48,6 @@ void Topic::parse()
 	}
 	if (topic[0] == ':' && topic.length() > 1)
 		topic.erase(0, 1);
-
 	rplStr = NORESP;
 }
 
@@ -79,7 +78,7 @@ void Topic::execute()
 		if (!currentTopic.empty())
 			rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), currentTopic);
 		else
-			rplStr += RPL_NOTOPIC(client.getNickname(), chan->getName());
+			rplStr += RPL_NOTOPIC(chan->getName());
 		return;
 	}
 	// change the Topic (or clear).
@@ -88,7 +87,8 @@ void Topic::execute()
 		rplStr += ERR_CHANOPRIVSNEEDED(client.getNickname(), chan->getName());
 		return;
 	}
-	chan->setTopic((topic[0] == ':') ? "" : topic);
+
+	chan->setTopic((topic[0] == ':' && topic.length() == 1) ? "" : topic);
 	// rplStr += "Hey everyone, your attention please\r\n";
 	rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), chan->getTopic());
 	return;
