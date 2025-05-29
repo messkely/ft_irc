@@ -14,7 +14,7 @@
 #include "../../include/Server.hpp"
 
 Part::Part(Server &server, Client &client, char **args, int argc)
-	: ACommand(server, client, args, argc)
+	: ACommand(server, client, args, argc), reason(client.getNickname())
 {}
 
 Part::~Part()
@@ -44,16 +44,14 @@ void Part::parse()
 
 	if (argc > 2)
 	{
+		reason.clear();
+
 		for (int i = 2; i < argc; ++i)
 		{
-			if (args[i])
-			{
-				if (!reason.empty())
-					reason += " ";
-				reason += args[i];
-			}
+			reason += args[i];
+			reason += SPACE;
 		}
-		if (!reason.empty() && reason[0] == ':')
+		if (!reason.empty() && reason[0] == COLON)
 			reason.erase(0, 1);
 	}
 

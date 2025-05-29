@@ -66,7 +66,7 @@ addrinfo	*getaddrList(const char *port)
 	int			gaiStatus;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_INET; // reset to AF_UNSPEC later
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 

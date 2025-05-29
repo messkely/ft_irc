@@ -6,7 +6,7 @@
 # JOIN rule: ( <channel> *( "," <channel> ) [ <key> *( "," <key> ) ] ) / "0"
 
 % JOIN
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
 			JOIN
@@ -40,44 +40,57 @@
 		!!	FAILURE
 			n1 JOIN #pele ; n1 MODE #pele [missing RPL_CHANNELMODEIS (causes ERR_NEEDMOREPARAMS)]
 			n1 JOIN #pele ; n1 TOPIC #pele :aka malloc : n2 JOIN #pele [TOPIC reply wrong format]
+		#limechat
+			JOIN #plato,:,#pele
 
 % PART
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
-		!!	FAILURE
+			PART
+			n1 JOIN #pandora ; n1 PART #pandora
+			n1 JOIN #pandora ; n1 PART pandora [no such chan]
+			PART #pandora      [no such chan + nick as default msg]
+			n1 JOIN #pandora ; n2 PART #pandora [not on chan]
+			n1 JOIN #pandora ; n1 PART #pandora leaving
+			n1 JOIN #pandora ; n1 PART #pandora leaving right now
+			n1 JOIN #pandora ; n1 PART #pandora :leaving right now
+			PART #pele \n\\\\\\\ ,.,.,. [[[]]]] \\\r\"\t\\n
 
+		!!	FAILURE
+			n1 JOIN #pandora ; n1 PART palace,#,#pandora
+		#limechat
+			PART #plato,:,#pele
 % TOPIC
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
 			
 		!!	FAILURE
 			TOPIC :
 % INVITE
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
 			
 		!!	FAILURE
 			
 % MODE
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
 			
 		!!	FAILURE
 			
 % PRIVMSG
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
 			
 		!!	FAILURE
 			
 % KICK
-	# general syntax 
+
 	- PERFORMED TESTS
 		! 	SUCCESS
 		!!	FAILURE

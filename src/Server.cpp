@@ -170,16 +170,16 @@ void	Server::listenForEvents(const vector <pollfd> &lst)
 	monitor.listen();
 }
 
-static std::string	getIpStr(sockaddr_storage *addr)
+static std::string	getIpStr(sockaddr_storage *addr) // restore IPV6 support later
 {
 	char	*ipStr = NULL;
 
-	if (addr->ss_family == AF_INET6)
-	{
-		sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
+	// if (addr->ss_family == AF_INET6)
+	// {
+	// 	sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
 		
-		return (inet_ntoa6(&ipv6->sin6_addr));
-	}
+	// 	return (inet_ntoa6(&ipv6->sin6_addr));
+	// }
 
 	if (addr->ss_family == AF_INET)
 	{
