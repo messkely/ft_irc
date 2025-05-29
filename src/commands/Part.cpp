@@ -33,13 +33,10 @@ void Part::parse()
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
 	{
-		if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
-		{
-			rplStr = ERR_NOSUCHCHANNEL(channel);
-			return;
-		}
-		if (!channel.empty())
-			channelNames.push_back(channel);
+		if (channel.empty())
+			continue ;
+	
+		channelNames.push_back(channel);
 	}
 
 	if (argc > 2)

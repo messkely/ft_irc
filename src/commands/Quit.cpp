@@ -1,4 +1,5 @@
 #include "../../include/commands/commands.h"
+#include "../../include/Server.hpp"
 #include <iostream>
 
 Quit::Quit(Server &server, Client &client, char **args, int argc)
@@ -30,7 +31,9 @@ void	Quit::execute()
 	for (int i = 1; i < argc; i++)
 		(msg += args[i]) += ' ';
 
-	rplStr = RPL_QUIT(client.getNickname(), msg);
+	rplStr = RPL_QUIT(client.getPrefix(), msg);
+	
+	server.broadcastToClients(rplStr, client.getNickname());
 }
 
 void	Quit::resp()

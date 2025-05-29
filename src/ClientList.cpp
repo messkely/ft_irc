@@ -60,3 +60,14 @@ Client	&ClientList::getClientByNickname(std::string nickname)
 
 	return (*(--lst.end()));
 }
+
+// broadcast to all clients in the server except
+// sender (the client which the message originated from)
+void	ClientList::broadcast(std::string msg, std::string senderNick)
+{
+	for (t_clients::iterator it = lst.begin(); it != lst.end(); it++)
+	{
+		if (it->getNickname() != senderNick)
+			*it << msg;
+	}
+}

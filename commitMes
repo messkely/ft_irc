@@ -1,0 +1,7 @@
+added more PART tests
+added server prefix to messages and replies originating from server
+broadcasting QUIT message when a client leaves
+removed unnecessary method Server::getChannels
+removed unnecessary syntax error detection logic from PART (naturally fixed : n1 JOIN #pandora ; n1 PART palace,#,#pandora)
+added TOPIC test
+fixed INVITE reply

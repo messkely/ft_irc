@@ -51,7 +51,7 @@ void	Nick::execute()
 		return ;
 
 	if (!client.getUsername().empty() && client.getNickname().empty())
-		rplStr = RPL_WELCOME(args[1], client.getUsername(), client.getHostname());
+		rplStr = RPL_WELCOME(std::string(args[1]), client.getUsername(), client.getHostname());
 
 	client.setNickname(args[1]);
 }

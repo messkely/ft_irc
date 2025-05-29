@@ -84,6 +84,15 @@ Client	&Server::getClientByFd(int fd)
 	return (clients.getClientByFd(fd));
 }
 
+
+// broadcast msg to all clients in the server except
+// sender (the client which the message originated from)
+
+void	Server::broadcastToClients(string msg, string senderNick)
+{
+	clients.broadcast(msg, senderNick);
+}
+
 // channel management
 
 Channel	*Server::getChannel(const std::string& name)
@@ -119,19 +128,18 @@ void Server::removeChannel(const std::string& name)
 	}
 }
 
-std::vector<Channel*>& Server::getChannels()
-{
-    return (channels);
-}
+// std::vector<Channel*>& Server::getChannels()
+// {
+//     return (channels);
+// }
 
 void Server::leaveAllChannels(int fd)
 {
 	Client	&client = clients.getClientByFd(fd);
-	std::vector<Channel *> &allChans = getChannels();
 
-    for (size_t idx = 0; idx < allChans.size(); ++idx)
+    for (size_t idx = 0; idx < channels.size(); ++idx)
     {
-        Channel *ch = allChans[idx];
+        Channel *ch = channels[idx];
         if (ch->hasUser(client))
         {
             std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");

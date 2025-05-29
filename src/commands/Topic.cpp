@@ -31,11 +31,6 @@ void Topic::parse()
 	}
 	
 	channelName = args[1];
-	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
-	{
-		rplStr = ERR_NOSUCHCHANNEL(channelName);
-		return;
-	}
 
 	for (int i = 2; i < argc; ++i)
 	{

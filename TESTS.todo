@@ -56,25 +56,51 @@
 			n1 JOIN #pandora ; n1 PART #pandora leaving right now
 			n1 JOIN #pandora ; n1 PART #pandora :leaving right now
 			PART #pele \n\\\\\\\ ,.,.,. [[[]]]] \\\r\"\t\\n
-
-		!!	FAILURE
+			JOIN #pele ; PART ,,,,,,,,,,,,#pele,,,,,,,,,
+			JOIN #pele ; PART ,,,,,,,,,,,,,,#pele,,,,,,,,,,,,#pele
+			PART ,,,,,,,,,,,,
+			n1 JOIN #plato,#pele,#pandora ; n2 JOIN #plato,#pele,#pandora ; n1 PART #pele,#plato,#pandora :leaving forever [n2 made operator + message inclusive reply]
+			n1 JOIN #plato,#pele,#pandora ; n1 PART #pele,#plato,#pandora leaving forever [channels removed]
+			n1 JOIN #pele,#plato ; n2 JOIN #pele ; n2 PART #plato,#plato [leaves #pele + not on chan: #plato + message inclusive rpl]
+			PART #,#,,,,,,,,,
 			n1 JOIN #pandora ; n1 PART palace,#,#pandora
+		!!	FAILURE
 		#limechat
 			PART #plato,:,#pele
 % TOPIC
 
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			JOIN #pele ; TOPIC #pele [not set]
+			TOPIC #
+			TOPIC
+			TOPIC l a a a a
+			TOPIC ,,,,,,,
+			n1 JOIN #pele ; n1 TOPIC #pele hello bug ; n2 JOIN #pele
+			TOPIC #plato [no such chan]
+			n1 JOIN #pele ; n1 TOPIC #pele hello bug ; n2 TOPIC #pele
+			TOPIC #pele,
+			TOPIC #pele :
+			TOPIC #pele :la vie en rose
+			TOPIC #pele :la vie en rose ::::
+			n1 JOIN #plato ; n2 TOPIC #plato
+			n1 JOIN #plato ; n2 TOPIC #plato :not my buisness
+
+
 		!!	FAILURE
+		#limechat
 			TOPIC :
 % INVITE
 
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			INVITE
+			INVITE mark
+			INVITE mark #pele [no such nick]
+			n1 NICK mark; n2 INVITE mark #pele [no such channel]
+
 		!!	FAILURE
-			
+			n1 JOIN #pele ; n2 NICK mark ; n1 INVITE mark #pele ; n1 INVITE mark #pele
 % MODE
 
 	- PERFORMED TESTS
@@ -90,6 +116,12 @@
 		!!	FAILURE
 			
 % KICK
+
+	- PERFORMED TESTS
+		! 	SUCCESS
+		!!	FAILURE
+
+% QUIT
 
 	- PERFORMED TESTS
 		! 	SUCCESS

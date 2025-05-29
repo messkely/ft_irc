@@ -17,6 +17,7 @@ class ClientList
 		void		remove(int fd);
 		Client		&getClientByFd(int fd);
 		Client		&getClientByNickname(std::string nickname);
+		void		broadcast(std::string msg, std::string senderNick);
 };
 
 #endif

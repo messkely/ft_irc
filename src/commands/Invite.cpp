@@ -84,10 +84,9 @@ void Invite::execute()
 		return;
 	}
 	chan->addUser(user);
-	rplStr = RPL_INVITING(client.getNickname(), nick, channelName);
-	std::string tmpStr = RPL_INVITE(client.getNickname(), nick, channelName);
+	std::string tmpStr = RPL_INVITE(client.getPrefix(), channelName, nick);
 	chan->broadcast(client, tmpStr);
-	rplStr += tmpStr;
+	rplStr = RPL_INVITING(channelName, nick);
 }
 
 void Invite::resp()
