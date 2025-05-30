@@ -95,12 +95,21 @@
 	- PERFORMED TESTS
 		! 	SUCCESS
 			INVITE
+			INVITE jk jk jk jk
 			INVITE mark
 			INVITE mark #pele [no such nick]
+			INVITE mark # [no such chan]
+			INVITE mark : [no such chan]
 			n1 NICK mark; n2 INVITE mark #pele [no such channel]
-
+			n1 JOIN #pele ; n2 NICK mark ; n2 INVITE mark #pele [ur not on chan]
+			n1 NICK jack ; n1 JOIN #pele ; n2 INVITE jack #pele [ur not on chan]
+			n1 NICK jack ; n1 JOIN #pele ; n2 NICK mark ; n1 INVITE mark #pele [n2 invited]
+			n1 JOIN #pele ; n2 NICK mark ; n3 NICK jack ; n1 INVITE mark #pele ; n1 INVITE jack #pele [n2/n3 invited]
+			n1 JOIN #pele ; n2 NICK jack ;n2 JOIN #pele ;  n1 INVITE jack [already on chan]
+			n1 JOIN #pele ; n2 JOIN #pele ; n3 NICK jack ; n2 INVITE jack #pele
 		!!	FAILURE
-			n1 JOIN #pele ; n2 NICK mark ; n1 INVITE mark #pele ; n1 INVITE mark #pele
+		#limechat
+			server sent INVITE message on interface
 % MODE
 
 	- PERFORMED TESTS

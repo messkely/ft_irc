@@ -21,8 +21,8 @@
 class Invite : public ACommand
 {
 	private:
-		std::string nick;
-		std::string channelName;
+		Client		*targClient;
+		Channel		*targChan;
 	public:
 		Invite(Server &server, Client &client, char **args, int argc);
 		virtual ~Invite();

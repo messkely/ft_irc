@@ -23,29 +23,46 @@ Invite::~Invite()
 
 void Invite::parse()
 {
-	if (argc != 3)
+	
+	if (argc < 3)
 	{
 		rplStr = ERR_NEEDMOREPARAMS(INVITE);
 		return;
 	}
 
-	// check channel arg
-	nick = args[1];
-	channelName = args[2];
-	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
-	{
-			rplStr = ERR_NOSUCHCHANNEL(channelName);
-			return;
-	}
+	std::string	nickname = args[1];
+	std::string	channelName = args[2];
+	
+	targChan = server.getChannel(channelName);
+	targClient = &server.getClientByNickname(nickname);
 
-	// Check if the target user doesn't exist or is not a member of the channel
-	Client& user = server.getClientByNickname(nick);
-	if (user.getNickname() != nick)
+	// // Check if the target user doesn't exist
+	if (targClient->getNickname() != nickname)
 	{
-		rplStr = ERR_NOSUCHNICK(nick);
+		rplStr = ERR_NOSUCHNICK(nickname);
 		return;
 	}
-	rplStr = NORESP;
+
+	// Check if the channel exists
+	if (!targChan)
+	{
+		rplStr = ERR_NOSUCHCHANNEL(channelName);
+		return;
+	}
+
+	// Check if the user's request is not from a member of the channel
+	if (!targChan->hasUser(client))
+	{
+		rplStr = ERR_NOTONCHANNEL(client.getNickname(), channelName);
+		return;
+	}
+
+	// Check the user target is already on the channel
+	if (targChan->hasUser(*targClient))
+	{
+		rplStr = ERR_USERONCHANNEL(targClient->getNickname(), channelName);
+		return;
+	}
 }
 
 
@@ -53,40 +70,17 @@ void Invite::execute()
 {
 	if (rplStr != NORESP)
 		return;
-	Channel *chan = server.getChannel(channelName);
-	Client& user = server.getClientByNickname(nick);
-	// Check if the channel exists
-	if (!chan)
+
+	// size_t clients_size = targChan->getClientCount();
+	// Check the user's privileges if required (channel is invite only)
+	if (targChan->isInviteOnly() && !targChan->isOp(client))
 	{
-		rplStr = ERR_NOSUCHCHANNEL(channelName);
+		rplStr =  ERR_CHANOPRIVSNEEDED(client.getNickname(), targChan->getName());
 		return;
 	}
 
-	// Check if the user's request is not from a member of the channel
-	if (!chan->hasUser(client))
-	{
-		rplStr = ERR_NOTONCHANNEL(client.getNickname(), channelName);
-		return;
-	}
-	
-	// Check the user target is already on the channel
-	if (chan->hasUser(user))
-	{
-		rplStr = ERR_USERONCHANNEL(user.getNickname(), channelName);
-		return;
-	}
-	
-	size_t clients_size = chan->getClientCount();
-	// Check the user's privileges
-	if (!chan->isOp(client) || (chan->getUserLimit() > 0 && clients_size >= chan->getUserLimit()))
-	{
-		rplStr =  ERR_CHANOPRIVSNEEDED(client.getNickname(), channelName);
-		return;
-	}
-	chan->addUser(user);
-	std::string tmpStr = RPL_INVITE(client.getPrefix(), channelName, nick);
-	chan->broadcast(client, tmpStr);
-	rplStr = RPL_INVITING(channelName, nick);
+	*targClient << RPL_INVITE(client.getPrefix(), targChan->getName(), targClient->getNickname());
+	rplStr = RPL_INVITING(targChan->getName(), targClient->getNickname());
 }
 
 void Invite::resp()
