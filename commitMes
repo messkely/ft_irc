@@ -1,4 +1,4 @@
-- added MODE tests
-- restricted setting channel topic to operators when +t flag is set
-- restricted joining channels to invited users only, when +i flag is set
-- added modes related JOIN tests
+added MODE tests
+restricted setting channel topic to operators when +t flag is set
+restricted joining channels to invited users only, when +i flag is set
+added modes related JOIN tests
