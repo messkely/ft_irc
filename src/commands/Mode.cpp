@@ -31,12 +31,6 @@ void Mode::parse()
 	channelName = args[1];
 	std::string modeArg = args[2];
 
-	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
-	{
-		rplStr = (std::string)ERR_NOTEXTTOSEND();
-		return;
-	}
-
 	if (modeArg.empty() || (modeArg[0] != '+' && modeArg[0] != '-'))
 	{
 		rplStr = ERR_INVALIDMODEPARM(channelName, modeArg);
@@ -130,7 +124,7 @@ void Mode::execute()
 		if (!mc.param.empty())
 			modeParams += " " + mc.param;
 	}
-	std::string tmpStr = RPL_MODE(ch->getName(), modeString, modeParams);
+	std::string tmpStr = RPL_MODE(client.getPrefix(), ch->getName(), modeString, modeParams);
 	ch->broadcast(client, tmpStr);
 	rplStr += tmpStr;
 }
@@ -156,7 +150,10 @@ void Mode::isInvitOnly(Channel *ch, std::string option, std::string option_arg)
 	(void)option_arg;
 
 	if (option[0] == '-')
+	{
 		ch->setInviteOnly(false);
+		ch->inviteListClear();
+	}
 	else
 		ch->setInviteOnly(true);
 }

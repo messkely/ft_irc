@@ -16,7 +16,6 @@ class Client
 		bool				isAccepted;
 		std::stringstream	msgBuf;
 		std::stringstream	rplBuf;
-		bool				isInvited;
 	public:
 		Client();
 		Client(int fd, std::string hostname, bool passwdBased);
@@ -38,8 +37,6 @@ class Client
 		void				setHasAuthed(bool status);
 		bool				getIsAccepted();
 		void				setIsAccepted(bool status);
-		bool				getIsInvited();
-		void				setIsInvited(bool status);
 		bool				isRegistered();
 		std::string			getPrefix() const;
 		std::string			&operator >> (std::string &line);

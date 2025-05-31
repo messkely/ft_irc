@@ -19,6 +19,8 @@
 #include "replies.h"
 #include "Client.hpp"
 
+typedef std::vector<Client *> clientPtrVec;
+
 class Channel {
 private:
     struct Member {
@@ -27,12 +29,13 @@ private:
         Member(Client* c, bool op) : client(c), isOp(op) {}
     };
 
-    std::string       name;
-    std::string       topic;
-    std::string       password;     // +k
-    size_t            userLimit;    // +l
-    bool              inviteOnly;   // +i
-    bool              topicLocked;  // +t
+    std::string     name;
+    std::string     topic;
+    std::string     password;     // +k
+    size_t          userLimit;    // +l
+    bool            inviteOnly;   // +i
+    bool            topicLocked;  // +t
+    clientPtrVec    inviteList;
 
 
 public:
@@ -49,6 +52,12 @@ public:
     void   setOp(Client& user);
     void   unsetOp(Client& user);
     bool   isOp(Client& user) const;
+
+    // — InviteList management —
+    void    inviteListAdd(Client &client);
+    void    inviteListRemove(Client &client);
+    void    inviteListClear();
+    bool    isInvited(Client &client);
 
     // — Modes —
     void	setInviteOnly(bool on);

@@ -48,20 +48,8 @@ void Join::parse()
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
 	{
-		// if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
-		// {
-		// 	rplStr = ERR_NOSUCHCHANNEL(channel);
-		// 	return;
-		// }
 		if (!channel.empty())
 			channelNames.push_back(channel);
-	}
-
-	// check channels
-	if (channelNames.size() > 9)
-	{
-		rplStr = ERR_TOOMANYCHANNELS(client.getNickname());
-		return;
 	}
 
 	// split keys
@@ -120,7 +108,7 @@ void Join::execute()
 		}
 
 		// key check
-		if (!ch->getPassword().empty() && !client.getIsInvited())
+		if (!ch->getPassword().empty())
 		{
 			if ((!ch->getPassword().empty() && key.empty()) || (!key.empty() && key != ch->getPassword()))
 			{
@@ -134,7 +122,7 @@ void Join::execute()
 			continue;
 
 		// invite-only?
-		if (ch->isInviteOnly() && !client.getIsInvited())
+		if (ch->isInviteOnly() && !ch->isInvited(client))
 		{
 			rplStr += ERR_INVITEONLYCHAN(client.getNickname(), name);
 			continue;

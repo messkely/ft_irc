@@ -71,13 +71,15 @@ void Invite::execute()
 	if (rplStr != NORESP)
 		return;
 
-	// size_t clients_size = targChan->getClientCount();
 	// Check the user's privileges if required (channel is invite only)
 	if (targChan->isInviteOnly() && !targChan->isOp(client))
 	{
 		rplStr =  ERR_CHANOPRIVSNEEDED(client.getNickname(), targChan->getName());
 		return;
 	}
+
+	if (targChan->isInviteOnly())
+		targChan->inviteListAdd(server.getClientByNickname(targClient->getNickname()));
 
 	*targClient << RPL_INVITE(client.getPrefix(), targChan->getName(), targClient->getNickname());
 	rplStr = RPL_INVITING(targChan->getName(), targClient->getNickname());

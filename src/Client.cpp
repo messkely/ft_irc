@@ -119,16 +119,6 @@ void	Client::setIsAccepted(bool status)
 	isAccepted = status;
 }
 
-bool	Client::getIsInvited()
-{
-	return (isInvited);
-}
-
-void	Client::setIsInvited(bool status)
-{
-	isInvited = status;
-}
-
 bool	Client::isRegistered()
 {
 	return (!nickname.empty() && !username.empty());

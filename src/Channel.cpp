@@ -19,6 +19,10 @@ Channel::Channel(const std::string& nm)
 // — Member management — 
 void Channel::addUser(Client& user, bool makeOp)
 {
+    // remove from invite list
+    if (isInviteOnly())
+        inviteListRemove(user);
+
     // skip dupes
     for (size_t i = 0; i < members.size(); ++i)
 	{
@@ -103,6 +107,46 @@ bool Channel::isOp(Client& user) const
             return members[i].isOp;
     }
     return false;
+}
+
+// — InviteList management —
+void    Channel::inviteListAdd(Client &client)
+{
+    for (clientPtrVec::iterator it = inviteList.begin(); it != inviteList.end(); ++it)
+    {
+        if (*it == &client)
+            return ;
+    }
+
+    inviteList.push_back(&client);
+}
+
+void    Channel::inviteListRemove(Client &client)
+{
+    for (clientPtrVec::iterator it = inviteList.begin(); it != inviteList.end(); ++it)
+    {
+        if (*it == &client)
+        {
+            inviteList.erase(it);
+            return ;
+        }
+    }
+}
+
+bool    Channel::isInvited(Client &client)
+{
+    for (clientPtrVec::iterator it = inviteList.begin(); it != inviteList.end(); ++it)
+    {
+        if (*it == &client)
+            return (true);
+    }
+
+    return (false);
+}
+
+void    Channel::inviteListClear()
+{
+    inviteList.clear();
 }
 
 // — Modes — 

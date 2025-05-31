@@ -6,7 +6,11 @@
 # JOIN rule: ( <channel> *( "," <channel> ) [ <key> *( "," <key> ) ] ) / "0"
 
 % JOIN
+	# if the limit flag is set, a request to JOIN a channel is dropped if that
+	# channel has already reached the limit
 
+	# if the key flag is set, a JOIN request is dropped if the channel key was not
+	# proivded or incorrect
 	- PERFORMED TESTS
 		! 	SUCCESS
 			JOIN
@@ -36,6 +40,29 @@
 			JOIN #pele key k k k
 			JOIN 0 0 0 0
 			JOIN #pele,pele,#
+
+			## invite-only related tests
+			n1 JOIN #pele ; n1 MODE #pele +i ; n2 JOIN #pele [invite only]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #plato ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #pele ; n2 PART #pele ; n2 JOIN #pele [invitation needed]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #pele ; n1 MODE #pele -i ; n2 PART #pele ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n1 MODE #pele -i ; n1 MODE #pele +i ; n2 JOIN #pele [invitation needed]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n1 MODE #pele -i ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 JOIN #plato ; n1 MODE #plato +i ; n2 JOIN #pele,#plato,#pear [n2 joined]
+
+			## member-limit related tests
+			n1 JOIN #pele ; n1 MODE #pele +l 1 : n2 JOIN #pele [cannot join +l]
+			n1 JOIN #pele ; n1 MODE #pele +l 0 : n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +l 1 ; n2 PART #pele; n2 JOIN #pele [cannot join +l]
+
+			## channel-key related test
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele letMeIn [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele letMeIn,pass [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele ,,,,,,, [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 JOIN #plato ; n1 MODE #plato +k pass ; n2 JOIN #pele,#plato pass [two key needed]
+
 
 		!!	FAILURE
 			n1 JOIN #pele ; n1 MODE #pele [missing RPL_CHANNELMODEIS (causes ERR_NEEDMOREPARAMS)]
@@ -68,7 +95,8 @@
 		#limechat
 			PART #plato,:,#pele
 % TOPIC
-
+	# if the channel has the t flag set, only operators of that channel can
+	# use TOPIC to set that channel's topic, regular members may still query the topic
 	- PERFORMED TESTS
 		! 	SUCCESS
 			JOIN #pele ; TOPIC #pele [not set]
@@ -85,13 +113,19 @@
 			TOPIC #pele :la vie en rose ::::
 			n1 JOIN #plato ; n2 TOPIC #plato
 			n1 JOIN #plato ; n2 TOPIC #plato :not my buisness
-
+			n1 JOIN #pele ; n1 MODE #pele +t ; n2 JOIN #pele ; n2 TOPIC #pele coco [not operator]
+			n1 JOIN #pele ; n1 MODE #pele +t ; n2 JOIN #pele ; n1 TOPIC #pele coco [topic updated]
+			n1 JOIN #pele ; n1 MODE #pele -t ; n2 JOIN #pele ; n2 TOPIC #pele coco [topic updated]
+			n1 JOIN #pele ; n1 MODE #pele +t ; n2 JOIN #pele : n1 MODE #pele +o n2 ; n2 TOPIC #pele setNewTopic [topic updated]
 
 		!!	FAILURE
 		#limechat
 			TOPIC :
 % INVITE
-
+	# when a channel is invite only, only oprators can issue INVITE commands, and only users invited can join
+	# so if a channel is invite-only, it has to keep track of the invited users, and reject any oustisders
+	# if the channel is no longer invite only, the invited users list is emptied
+	# if a user of the invited users joins, their name is removed from the list
 	- PERFORMED TESTS
 		! 	SUCCESS
 			INVITE
@@ -109,14 +143,18 @@
 			n1 JOIN #pele ; n2 JOIN #pele ; n3 NICK jack ; n2 INVITE jack #pele
 		!!	FAILURE
 		#limechat
-			server sent INVITE message on interface
+			how does the invite message appear on reciever's interface
 % MODE
-
+	# the invite list is cleared after MODE has unset the invite-only flag
+	# a MODE query is only visible to the memebers of the channel
+	# a MODE query exposes: the limit set, the channel key
+	# perhaps the format of the MODE query is as follows: +flag valueIfThere
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
 		!!	FAILURE
-			
+			MODE #pele -l
+			MODE #pele +l 0
+
 % PRIVMSG
 
 	- PERFORMED TESTS

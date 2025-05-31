@@ -47,7 +47,7 @@
 #define RPL_JOIN(prefix, channel)						prefix + " JOIN " + channel + LF
 #define RPL_CHANGEMODE(hostname, channelname, mode)		":" + hostname + " MODE " + channelname + " " + mode + LF
 #define RPL_UMODEIS(hostname, channelname, mode, user)	":" + hostname + " MODE " + channelname + " " + mode + " " + user + LF
-#define RPL_MODE(channel, modes, params) 				": MODE " + channel + " " + modes + params + LF
+#define RPL_MODE(prefix, channel, modes, params) 		prefix + " MODE " + channel + " " + modes + params + LF
 #define RPL_GIVEMODE(channel, target)					PREFIX "MODE " + channel + " +o " + target + LF
 #define RPL_KICK(prefix, channel, target, reason)		prefix + " KICK " + channel + " " + target + ((reason).empty() ? "" : (" :" + (reason))) + LF
 #define RPL_PART(prefix, channel, message)				prefix + " PART " + channel + ((message).empty() ? "" : (" :" + (message))) + LF

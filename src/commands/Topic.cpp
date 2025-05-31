@@ -67,7 +67,7 @@ void Topic::execute()
 	}
 
 	// get the topic
-	if (topic.empty() && (!chan->isTopicLocked() || chan->isOp(client)))
+	if (topic.empty())
 	{
 		currentTopic = chan->getTopic();
 		if (!currentTopic.empty())
