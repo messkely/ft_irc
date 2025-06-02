@@ -3,3 +3,4 @@ added MODE tests
 added mode query (MODE #channel)
 added modes unsetting logic for flags k l
 added PRIVMSG tests
+merged QUIT branch
