@@ -28,7 +28,6 @@ class Server
 		Client		&getClientByNickname(std::string nickname);
 		Client		&getClientByFd(int fd);
 		bool		isNicknameTaken(std::string nickname);
-		void		broadcastToClients(std::string msg, std::string senderNick);
 		
 		// channel management
 		Channel*	getChannel(const std::string& name);

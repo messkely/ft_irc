@@ -15,15 +15,13 @@ Pass::~Pass()
 
 void	Pass::parse()
 {
-	client.setHasAuthed(false); // for multiple PASS sent case
-
 	if (argc < PASS_ARGS_N)
 	{
 		rplStr = ERR_NEEDMOREPARAMS(PASS);
 		return ;
 	}
 
-	if (client.getIsAccepted())
+	if (client.getHasAuthed())
 	{
 		rplStr = ERR_ALREADYREGISTRED(PASS);
 		return ;

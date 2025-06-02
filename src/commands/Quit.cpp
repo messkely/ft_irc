@@ -21,7 +21,7 @@ void	Quit::parse()
 
 void	Quit::execute()
 {
-	std::string	msg;
+	std::string	msg = args[1] ? "" : "Closing connection";
 
 	if (rplStr != NORESP)
 		return ;
@@ -31,9 +31,7 @@ void	Quit::execute()
 	for (int i = 1; i < argc; i++)
 		(msg += args[i]) += ' ';
 
-	rplStr = RPL_QUIT(client.getPrefix(), msg);
-	
-	server.broadcastToClients(rplStr, client.getNickname());
+	rplStr = RPL_QUIT(msg);
 }
 
 void	Quit::resp()
