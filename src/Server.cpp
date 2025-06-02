@@ -136,13 +136,17 @@ void Server::removeChannel(const std::string& name)
 void Server::leaveAllChannels(int fd)
 {
 	Client	&client = clients.getClientByFd(fd);
-
+	
     for (size_t idx = 0; idx < channels.size(); ++idx)
     {
-        Channel *ch = channels[idx];
+		Channel *ch = channels[idx];
+		// leave as an invited memeber
+		if (ch->isInvited(client))
+			ch->inviteListRemove(client);
+		// leave as a memeber
         if (ch->hasUser(client))
         {
-            std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
+			std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
             ch->broadcast(client, partMsg);
             ch->removeUser(client);
 			if (ch->getClientCount() < 1)
@@ -155,7 +159,6 @@ void Server::leaveAllChannels(int fd)
 
     return;
 }
-
 
 // listen to all sockets, for recv ready
 // and only to those with non empty client replies buf, for send ready

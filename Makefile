@@ -12,11 +12,12 @@ HEADERS	= include/Server.hpp include/Client.hpp include/ClientList.hpp include/C
 
 # restore src/utils/inet_ntoa6.cpp later
 SRCS	= src/main.cpp src/utils/msgUtils.cpp src/utils/servSockGen.cpp		\
-		  src/utils/userInpParse.cpp src/utils/error.cpp src/Monitor.cpp src/Server.cpp src/Client.cpp	\
-		  src/ClientList.cpp src/Channel.cpp src/commands/ACommand.cpp src/commands/Pass.cpp			\
-		  src/commands/Nick.cpp src/commands/User.cpp src/commands/Join.cpp src/commands/Topic.cpp		\
-		  src/commands/Kick.cpp	src/commands/Topic.cpp src/commands/Part.cpp src/commands/Mode.cpp		\
-		  src/commands/Quit.cpp src/commands/Privmsg.cpp src/commands/Invite.cpp
+		  src/utils/userInpParse.cpp src/utils/error.cpp src/utils/stringUtils.cpp src/Monitor.cpp		\
+		  src/Server.cpp src/Client.cpp src/ClientList.cpp src/Channel.cpp src/commands/ACommand.cpp	\
+		  src/commands/Pass.cpp src/commands/Nick.cpp src/commands/User.cpp src/commands/Join.cpp		\
+		  src/commands/Topic.cpp src/commands/Kick.cpp	src/commands/Topic.cpp src/commands/Part.cpp	\
+		  src/commands/Mode.cpp src/commands/Quit.cpp src/commands/Privmsg.cpp src/commands/Invite.cpp	\
+		  
 
 OBJS	= $(SRCS:.cpp=.o)
 

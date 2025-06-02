@@ -1,4 +1,5 @@
+made leaving clients leave: not only channels but also invite lists they appear on
 added MODE tests
-restricted setting channel topic to operators when +t flag is set
-restricted joining channels to invited users only, when +i flag is set
-added modes related JOIN tests
+added mode query (MODE #channel)
+added modes unsetting logic for flags k l
+added PRIVMSG tests

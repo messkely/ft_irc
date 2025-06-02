@@ -6,7 +6,7 @@
 /*   By: messkely <messkely@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/19 18:06:01 by messkely          #+#    #+#             */
-/*   Updated: 2025/04/29 20:50:55 by messkely         ###   ########.fr       */
+/*   Updated: 2025/05/08 20:35:32 by messkely         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,6 @@ void Privmsg::execute()
 {
 	std::string currentTopic;
 	Channel *chan;
-	Client user;
 	if (rplStr != NORESP)
 		return;
 	size_t nicks_size = nicks.size();
@@ -80,21 +79,20 @@ void Privmsg::execute()
 				rplStr += ERR_CANNOTSENDTOCHAN(client.getNickname(), channelNames[i]);
 				continue;
 			}
-			tmpStr = RPL_MSG(client.getNickname(), msg);
+			tmpStr = RPL_PRIVMSG(client.getPrefix(), chan->getName(), msg);
 			chan->broadcast(client, tmpStr);
-			rplStr += tmpStr;	
-		}			
+		}
 
 		// Validite and Process the users
 		if (i < nicks_size)
 		{
-			user = server.getClientByNickname(nicks[i]);
-			if (user.getNickname() != nicks[i])
+			Client& user = server.getClientByNickname(nicks[i]);
+			if (!server.isNicknameTaken(nicks[i]))
 			{
 				rplStr += ERR_NOSUCHNICK(nicks[i]);
 				continue;
 			}
-			user << RPL_PRIVMSG(client.getNickname(), nicks[i], msg);
+			user << RPL_PRIVMSG(client.getPrefix(), nicks[i], msg);
 		}
 	}
 }

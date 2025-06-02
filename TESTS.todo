@@ -6,11 +6,6 @@
 # JOIN rule: ( <channel> *( "," <channel> ) [ <key> *( "," <key> ) ] ) / "0"
 
 % JOIN
-	# if the limit flag is set, a request to JOIN a channel is dropped if that
-	# channel has already reached the limit
-
-	# if the key flag is set, a JOIN request is dropped if the channel key was not
-	# proivded or incorrect
 	- PERFORMED TESTS
 		! 	SUCCESS
 			JOIN
@@ -50,19 +45,27 @@
 			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n1 MODE #pele -i ; n1 MODE #pele +i ; n2 JOIN #pele [invitation needed]
 			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n1 MODE #pele -i ; n2 JOIN #pele [n2 joined]
 			n1 JOIN #pele ; n1 MODE #pele +i ; n1 JOIN #plato ; n1 MODE #plato +i ; n2 JOIN #pele,#plato,#pear [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 ctrl+c [n2 removed from #pele invite list]
 
 			## member-limit related tests
 			n1 JOIN #pele ; n1 MODE #pele +l 1 : n2 JOIN #pele [cannot join +l]
 			n1 JOIN #pele ; n1 MODE #pele +l 0 : n2 JOIN #pele [n2 joined]
 			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +l 1 ; n2 PART #pele; n2 JOIN #pele [cannot join +l]
 
-			## channel-key related test
+			## channel-key related tests
 			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele [bad key]
 			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele letMeIn [bad key]
 			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele letMeIn,pass [bad key]
 			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele ,,,,,,, [bad key]
 			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 JOIN #plato ; n1 MODE #plato +k pass ; n2 JOIN #pele,#plato pass [two key needed]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele pass ; n1 MODE #pele +k newPass ; n2 JOIN #pele pass [n2 remains on chan]
+			n1 JOIN #pele ; n1 MODE #pele +k pele ; n1 JOIN #pepe ; n1 MODE #pepe +k pepe ; n2 JOIN #pepe,#pele,#pepe,#pele wrong,wrong,pepe,pele [n2 joins #pele/pepe]
+			n1 JOIN #pele ; n1 MODE #pele +k pele ; n1 JOIN #pepe ; n1 MODE #pepe +k pepe ; n2 JOIN #pepe,#pele,#pepe,#pele wrong,pele,pepe,wrong [n2 joins #pele/pepe]
 
+			## combined modes related tests
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 MODE #pele +i ; n2 JOIN #pele pass [rejected: invite only]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 MODE #pele +i ; n1 INVITE n2 #pele ; n2 JOIN #pele [rejected: bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 MODE #pele +i ; n1 INVITE n2 #pele ; n2 JOIN #pele wrong ; n2 JOIN #pele pass [n2 joined]
 
 		!!	FAILURE
 			n1 JOIN #pele ; n1 MODE #pele [missing RPL_CHANNELMODEIS (causes ERR_NEEDMOREPARAMS)]
@@ -122,10 +125,7 @@
 		#limechat
 			TOPIC :
 % INVITE
-	# when a channel is invite only, only oprators can issue INVITE commands, and only users invited can join
-	# so if a channel is invite-only, it has to keep track of the invited users, and reject any oustisders
-	# if the channel is no longer invite only, the invited users list is emptied
-	# if a user of the invited users joins, their name is removed from the list
+	# when a channel is invite only, only oprators can issue INVITE commands, and only invited users can join
 	- PERFORMED TESTS
 		! 	SUCCESS
 			INVITE
@@ -145,25 +145,97 @@
 		#limechat
 			how does the invite message appear on reciever's interface
 % MODE
-	# the invite list is cleared after MODE has unset the invite-only flag
 	# a MODE query is only visible to the memebers of the channel
 	# a MODE query exposes: the limit set, the channel key
 	# perhaps the format of the MODE query is as follows: +flag valueIfThere
 	- PERFORMED TESTS
 		! 	SUCCESS
+			MODE
+			MODE #
+			MODE 123
+			MODE \t lemon
+			JOIN #pele ; MODE #pele lemon
+			JOIN #pele ; MODE #pele +kali goku
+			n1 JOIN #pele ; n1 MODE pele +
+			n1 JOIN #pele ; n1 MODE pele +-
+			n1 JOIN #pele ; n1 MODE pele +--------+-+---++++-
+			n1 JOIN #pele ; n1 MODE pele +--------+-+---++++-arm
+			n1 MODE #pele [no such chan]
+			n1 JOIN #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n1 MODE #pele +k key ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +k key ; n2 MODE #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele -/+t arg arg arg ; n2 MODE #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele -/+i arg arg arg ; n2 MODE #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +k key key1 key2 key3 ; n2 MODE #pele [takes first]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +o n n1 n2 n3 ; n2 MODE #pele [takes first]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +l 1 2 19 0 1 goku ; n2 MODE #pele [takes first]
+			n1 JOIN #pele ; n1 MODE #pele +l [ERR_NEEDMOREPARAMS]
+			n1 JOIN #pele ; n1 MODE #pele +---++---+l 12 ; n2 JOIN #pele ; n2 MODE #pele [last sign]
+			n1 JOIN #pele ; n1 MODE #pele +---++---+k key ; n2 JOIN #pele ; n2 MODE #pele [last sign]
+			n1 JOIN #pele ; n1 MODE #pele +-+++++--++++++t ; n2 JOIN #pele ; n2 MODE #pele
+			n1 JOIN #pele ; n1 MODE #pele +--++++++++-+++i ; n2 JOIN #pele ; n2 MODE #pele
+			n1 JOIN #pele ; n1 MODE #pele +-+-++kk key1 key2 ; n2 JOIN #pele ; n2 MODE #pele [chan pass set to key2 (latest key)]
+			n1 JOIN #pele ; n1 MODE #pele +--++lll 1 2 10 ; n2 JOIN #pele ; n2 MODE #pele [chan limit set to 10 (latest val)]
+			n1 JOIN #pele ; n1 MODE #pele ++++--it; n2 JOIN #pele ; n2 MODE #pele [both flags unset]
+			n1 JOIN #pele ; n1 MODE #pele +it; n2 JOIN #pele ; n2 MODE #pele [both flags set]
+			MODE #pele +l 0 ; MODE #pele [l flag unset]
+			MODE #pele +lllkk 13 12 1 key1 key2 [latest val: k key2, l 1]
+			MODE #pele +itkkk key1 key2 555 [latest val: k 555 + it set]
+			MODE #pele +itllkkllkkit 13 12 key1 key2 11 10 key3 key4 [#pele +klit key4 10]
+			MODE #pele +klllk key1 -1 avatar 7 key2 [#pele +kl key2 7]
+			MODE #pele +ititititkkkllkl arm arm2 arm3 -11 avatar mykey notRight xtra xtra xtra [#pele +kit mykey]
+			MODE #pele ---it+++klk key1 0 key [+k key]
+			MODE #pele +llkkiittlkv a a a a 1 tko [invalid mode param]
+			MODE #pele -l [flag unset]
+			MODE #pele -k [flag unset]
+			MODE #pele -kllkklklklkk [flags kl unset]
+			MODE #pele -kllkklklklkkiitt [klit flags unset]
+			MODE #pele -k [flag unset]
+			MODE #pele -i [flag unset]
+			MODE #pele +k [k set to empty val]
+			MODE #pele +l [l set to 0]
+			MODE #pele +klit key1 5 ; MODE #pele +kl-it [klit flags unset]
+			MODE #pele +o ahmed [no such nick]
+			NICK baron ; MODE #pele +klito key1 99 baron
+			NICK baron ; MODE #pele +klito key1 99 baron xtra xtra xtra
+
 		!!	FAILURE
-			MODE #pele -l
-			MODE #pele +l 0
 
 % PRIVMSG
 
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			PRIVMSG
+			PRIVMSG #pele [not enough params]
+			PRIVMSG bale hi [no such nick/chan]
+			PRIVMSG bale hi [no such nick/chan]
+			PRIVMSG bale hi guys good to see you [no such nick/chan]
+			NICK jack ; PRIVMSG jack hi me
+			PRIVMSG # hi guru [no such chan]
+			n2 NICK kim ; PRIVMSG kim #pele GOING BACK TO ITALY
+			n2 NICK kim ; PRIVMSG kim :GOING BACK TO ITALY
+			n2 NICK kim ; PRIVMSG kim :::GOING BACK TO ITALY
+			n2 NICK kim ; PRIVMSG kim :::GOING BACK TO ITALY
+			PRIVMSG #going home
+			n1 JOIN #pele ; PRIVMSG #pele anyone guys?
+			n1 JOIN #pele ; n2 JOIN #pele ; PRIVMSG #pele hello guys
+			n1 JOIN #pele ; n2 JOIN #plato ; n1 PRIVMSG #pele,#plato hey guys [#plato not on chan]
+			n1 JOIN #pele ; n2 JOIN #plato ; n1 JOIN #plato ; n1 PRIVMSG #pele,#plato anyone? [delivered to #pele,#plato]
 		!!	FAILURE
 			
 % KICK
-
+	# target not on channel
+	# you're not on channel
+	# you're not op
+	# does channel remain after last op kick itself
+	# does traget acctually get kicked
+	# errouneous nickname
+	# errouneous channelname
+	# does it execute without comment
+	# does it execute with comment
+	# does it take away colon
+	# has it a default message (the nickname of the kicker)
+	# it can allow either: -a single channel and a list of users. or -as many channels as users (mapping each user to a channel)
 	- PERFORMED TESTS
 		! 	SUCCESS
 		!!	FAILURE
@@ -173,3 +245,11 @@
 	- PERFORMED TESTS
 		! 	SUCCESS
 		!!	FAILURE
+
+% server issues revealed while testing
+	server not closing immediately after a valid command has been sent before authentication (due to flush behavior / just linux's nc behavior)
+% server todos
+	add ingame flag
+	tests to how the server handles data containing not one message in a single send (tests concerning the workings of nc)
+	correction sheet tests
+	check comments for ptential unfinished stuff

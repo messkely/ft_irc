@@ -33,6 +33,7 @@ class Mode : public ACommand
 
 	private:
 		std::string	channelName;
+		bool		isModeQuery;
 		std::vector<ModeChange> modeChanges;
 
 	public:

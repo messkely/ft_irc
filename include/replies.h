@@ -38,18 +38,18 @@
 #define RPL_NAMREPLY(sender, channel, users)    		PREFIX "353 " + sender + " @ " + channel + " :" + users + LF
 #define RPL_ENDOFNAMES(sender, channel)        			PREFIX "366 " + sender + " " + channel + " :END of /NAMES list" LF
 #define RPL_MODE_OP(nick, user, host, channel) 			":" + nick + "!" + user + "@" + host + " MODE " + channel + " +o @" + nick + LF
-#define RPL_TOPIC(prefix, channel, topic) 				prefix + " 332" + " TOPIC " + channel + " :" + topic + LF
+#define RPL_TOPIC(prefix, channel, topic) 				prefix + " 332 " + channel + " :" + topic + LF
 #define RPL_NOTOPIC(channel) 							PREFIX + std::string("331") + " TOPIC " + channel + " :No topic is set" + LF
-#define RPL_PRIVMSG(sender, target, msg)				":" + sender + " PRIVMSG " + target + " :" + msg + LF 
+#define RPL_PRIVMSG(prefix, target, msg)				prefix + " PRIVMSG " + target + " :" + msg + LF 
 #define RPL_INVITING(targchan, targnick) 	 			PREFIX + std::string("341 ") + targchan + " " + targnick + LF
-#define RPL_INVITE(prefix, targchan, targnick) 	 	prefix + " INVITE " + targchan + " " + targnick + LF
+#define RPL_INVITE(prefix, targchan, targnick)          prefix + " INVITE " + targchan + " " + targnick + LF
 #define RPL_JOINMSG(hostname, ipaddress, channelname)	":" + hostname + "@" + ipaddress + " JOIN :" + channelname + LF
 #define RPL_JOIN(prefix, channel)						prefix + " JOIN " + channel + LF
 #define RPL_CHANGEMODE(hostname, channelname, mode)		":" + hostname + " MODE " + channelname + " " + mode + LF
-#define RPL_UMODEIS(hostname, channelname, mode, user)	":" + hostname + " MODE " + channelname + " " + mode + " " + user + LF
+#define RPL_CHANNELMODEIS(channelname, mode, params)    PREFIX "324 " + channelname + " " + mode + " " + params + LF
 #define RPL_MODE(prefix, channel, modes, params) 		prefix + " MODE " + channel + " " + modes + params + LF
 #define RPL_GIVEMODE(channel, target)					PREFIX "MODE " + channel + " +o " + target + LF
 #define RPL_KICK(prefix, channel, target, reason)		prefix + " KICK " + channel + " " + target + ((reason).empty() ? "" : (" :" + (reason))) + LF
 #define RPL_PART(prefix, channel, message)				prefix + " PART " + channel + ((message).empty() ? "" : (" :" + (message))) + LF
 #define RPL_MSG(sender,msg)								PREFIX ":" + sender + " :" + msg + LF
-#define RPL_QUIT(prefix, msg)							prefix + " " + QUIT + " :" + msg + LF
+#define RPL_QUIT(prefix, msg)                           prefix + " " + QUIT + " :" + msg + LF

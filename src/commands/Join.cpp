@@ -107,6 +107,10 @@ void Join::execute()
 			continue;
 		}
 
+		// already in channel?
+		if (ch->hasUser(client))
+			continue;
+	
 		// key check
 		if (!ch->getPassword().empty())
 		{
@@ -116,10 +120,6 @@ void Join::execute()
 				continue;
 			}
 		}
-
-		// already in channel?
-		if (ch->hasUser(client))
-			continue;
 
 		// invite-only?
 		if (ch->isInviteOnly() && !ch->isInvited(client))
@@ -151,7 +151,7 @@ void Join::execute()
 		rplStr += joinMsg;
 		ch->broadcast(client, joinMsg);
 		// 2) names list
-		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(name) : rplStr += RPL_TOPIC(client.getNickname(), ch->getName(), ch->getTopic());
+		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(name) : rplStr += RPL_TOPIC(client.getPrefix(), ch->getName(), ch->getTopic());
 		rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
 		rplStr += RPL_ENDOFNAMES(client.getNickname(), name);
 	}
