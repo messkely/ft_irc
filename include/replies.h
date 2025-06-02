@@ -52,4 +52,4 @@
 #define RPL_KICK(prefix, channel, target, reason)		prefix + " KICK " + channel + " " + target + ((reason).empty() ? "" : (" :" + (reason))) + LF
 #define RPL_PART(prefix, channel, message)				prefix + " PART " + channel + ((message).empty() ? "" : (" :" + (message))) + LF
 #define RPL_MSG(sender,msg)								PREFIX ":" + sender + " :" + msg + LF
-#define RPL_QUIT(prefix, msg)                           prefix + " " + QUIT + " :" + msg + LF
+#define RPL_QUIT(msg)									"ERROR: " + msg + LF

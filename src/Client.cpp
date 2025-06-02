@@ -16,7 +16,7 @@ Client::Client()
 }
 
 Client::Client(int fd, std::string hostname, bool passwdBased)
-	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(false), isAccepted(!passwdBased)
+	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(!passwdBased)
 {
 	std::cout << "Client's Parametrized Constructor called\n";
 }
@@ -42,7 +42,6 @@ Client	&Client::operator = (const Client &rhs)
 	username = rhs.username;
 	isRejected = rhs.isRejected;
 	hasAuthed = rhs.hasAuthed;
-	isAccepted = rhs.isAccepted;
 
 	return (*this);
 }
@@ -106,17 +105,6 @@ bool	Client::getHasAuthed()
 void	Client::setHasAuthed(bool status)
 {
 	hasAuthed = status;
-}
-
-// returns true if client has passed passwd validation; false otherwise
-bool	Client::getIsAccepted()
-{
-	return (isAccepted);
-}
-
-void	Client::setIsAccepted(bool status)
-{
-	isAccepted = status;
 }
 
 bool	Client::isRegistered()

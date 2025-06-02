@@ -84,15 +84,6 @@ Client	&Server::getClientByFd(int fd)
 	return (clients.getClientByFd(fd));
 }
 
-
-// broadcast msg to all clients in the server except
-// sender (the client which the message originated from)
-
-void	Server::broadcastToClients(string msg, string senderNick)
-{
-	clients.broadcast(msg, senderNick);
-}
-
 // channel management
 
 Channel	*Server::getChannel(const std::string& name)
@@ -276,18 +267,15 @@ void	Server::handleReadyFd(const pollfd &pfd)
 // ;false otherwise
 static bool	isCommandDropped(Client &client, string cmdName)
 {
-	if (cmdName != PASS && !client.getIsAccepted() && !client.getHasAuthed())
+	if (cmdName != PASS && !client.getHasAuthed())
 	{
 		client << ERR_CLIENTREJECTED();
 		client.setIsRejected(true);
 		return (true);
 	}
 
-	if (cmdName != PASS && !client.getIsAccepted())
-		client.setIsAccepted(true);
-
 	if (cmdName != PASS && cmdName != USER && cmdName != NICK
-		&& !client.isRegistered())
+		&& cmdName != QUIT && !client.isRegistered())
 	{
 		client << ERR_NOTREGISTERED(cmdName);
 		return (true);

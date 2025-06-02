@@ -1,9 +1,8 @@
 # success indicates the server responds adequatly to message [ makes changes / sends replies]
-# failure indicates the server failes to respond adequetly to message [ no changes / makes incomplete changes / does not reply / missing replies]
+# failure indicates the server failes to respond adequetly to message [ no changes / makes incomplete changes / does not reply / missing some replies]
 # if message placed in failure, a list of reasons must be supplied
 # the ; separator means the test requires more than a message
 # n(num) indicates a different client
-# JOIN rule: ( <channel> *( "," <channel> ) [ <key> *( "," <key> ) ] ) / "0"
 
 % JOIN
 	- PERFORMED TESTS
@@ -15,11 +14,13 @@
 			JOIN pele
 			JOIN #pele ; JOIN #pele
 			n1 JOIN #pele ; n1 ctrl+c ; n2 JOIN #pele [n2 made operator]
+			n1 JOIN #pele ; n1 QUIT leaving ; n2 JOIN #pele [n2 made operator]
 			n1 JOIN #pele ; n2 JOIN #pele ; n1 ctrl+c [n2 made operator]
 			n1 JOIN #pele ; n2 JOIN #plato ; n2 JOIN #pele ; n1 JOIN #plato ; n1 ctrl+c [n2 made operator for #pele]
 			n1 JOIN #pele/plato ; n2 JOIN #pele/plato ; n1 ctrl+c ; n2 ctrl+c ; n3 JOIN #pele/plato [n3 made operator for #pele/plato]
 			n1 JOIN #pele/plato ; n2 JOIN #pele/plato ; n3 JOIN #pele/plato ; n1/n2 ctrl+c ; [n3 made operator for #pele/plato]
 			n1 JOIN #pele,#plato ; n2 JOIN #pele,#plato ; n1 JOIN 0 [n2 made operator for #pele,#plato] ; n2 JOIN 0 [channels removed]
+			n1 JOIN #pele,#plato ; n2 JOIN #pele,#plato ; n1 QUIT [n2 made operator for #pele,#plato] ; n2 QUIT [channels removed]
 			n1 JOIN #pele ; n2 PART #pele
 			JOIN # plato
 			JOIN                    #plato
@@ -244,6 +245,9 @@
 
 	- PERFORMED TESTS
 		! 	SUCCESS
+		QUIT
+		QUIT goodbye
+		QUIT goodbye, see you tomorrow
 		!!	FAILURE
 
 % server issues revealed while testing
