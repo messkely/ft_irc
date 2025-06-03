@@ -14,7 +14,8 @@
 #include "../../include/Server.hpp"
 
 Kick::Kick(Server &server, Client &client, char **args, int argc)
-	: ACommand(server, client, args, argc) {}
+	: ACommand(server, client, args, argc), reason(client.getNickname())
+{}
 
 Kick::~Kick() {}
 
@@ -31,11 +32,6 @@ void Kick::parse()
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
 	{
-		if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
-		{
-			rplStr = ERR_NOSUCHCHANNEL(channel);
-			return;
-		}
 		if (!channel.empty())
 			channelNames.push_back(channel);
 	}
@@ -45,29 +41,30 @@ void Kick::parse()
 	std::string user;
 	while (std::getline(ssU, user, ','))
 	{
-		// if (!server.isNicknameTaken(user))
-		// {
-		// 	rplStr = ERR_NOSUCHNICK(user);
-		// 	continue;
-		// }
-		usersName.push_back(user);
+		if (!user.empty())
+			usersName.push_back(user);
+	}
+	
+	if (channelNames.size() != 1 && channelNames.size() != usersName.size())
+	{
+		rplStr = ERR_SYNTAXERR(KICK);
+		return ;
 	}
 
 	if (argc > 3)
 	{
+		reason.clear();
+
+		std::cerr << "content of Kick::reason " << reason << std::endl;
 		for (int i = 3; i < argc; ++i)
 		{
-			if (args[i])
-			{
-				if (!reason.empty())
-					reason += " ";
-				reason += args[i];
-			}
+			reason += args[i];
+			reason += SPACE;
 		}
-		if (!reason.empty() && reason[0] == ':')
+		if (!reason.empty() && reason[0] == COLON)
 			reason.erase(0, 1);
+		std::cerr << "content of Kick::reason " << reason << std::endl;
 	}
-	rplStr = NORESP;
 }
 
 void Kick::execute()
@@ -78,47 +75,40 @@ void Kick::execute()
 	size_t chsSize = channelNames.size();
 	size_t usersSize = usersName.size();
 
-	for (size_t i = 0; i < chsSize; ++i)
+	for (size_t i = 0; i < usersSize; ++i)
 	{
-		std::string chanName = channelNames[i];
-		for (size_t j = 0; j < usersSize; ++j)
+		std::string chanName = (chsSize != 1) ? channelNames[i] : channelNames[i - i]; // iterate over channs as well : stick to the first chan
+		std::string nick = usersName[i];
+		if (nick.empty())
+			continue;
+		Channel *ch = server.getChannel(chanName);
+		if (!ch)
 		{
-			std::string nick = usersName[j];
-			if (nick.empty())
-				continue;
-
-			Channel *ch = server.getChannel(chanName);
-			if (!ch)
-			{
-				rplStr += ERR_NOSUCHCHANNEL(chanName);
-				continue;
-			}
-			if (!ch->hasUser(client))
-			{
-				rplStr += ERR_NOTONCHANNEL(client.getNickname(), ch->getName());
-				continue;
-			}
-			if (ch->hasUser(client) && !ch->isOp(client))
-			{
-				rplStr += ERR_CHANOPRIVSNEEDED(client.getNickname(), ch->getName());
-				continue;
-			}
-			Client &target = ch->findUser(nick);
-			if (target.getNickname() != nick)
-			{
-				rplStr += ERR_USERNOTINCHANNEL(nick, ch->getName());
-				continue;
-			}
-			std::string tmpStr = RPL_KICK(client.getPrefix(), chanName, nick, reason);
-			ch->broadcast(client, tmpStr);
-			rplStr += tmpStr;
-			ch->removeUser(target);
-			if (ch->getClientCount() < 1)
-			{
-				// rplStr += RPL_CHANNELREMOVED(chanName);
-				server.removeChannel(chanName);
-			}
+			rplStr += ERR_NOSUCHCHANNEL(chanName);
+			continue;
 		}
+		if (!ch->hasUser(client))
+		{
+			rplStr += ERR_NOTONCHANNEL(client.getNickname(), ch->getName());
+			continue;
+		}
+		if (ch->hasUser(client) && !ch->isOp(client))
+		{
+			rplStr += ERR_CHANOPRIVSNEEDED(client.getNickname(), ch->getName());
+			continue;
+		}
+		Client &target = ch->findUser(nick);
+		if (target.getNickname() != nick)
+		{
+			rplStr += ERR_USERNOTINCHANNEL(nick, ch->getName());
+			continue;
+		}
+		std::string tmpStr = RPL_KICK(client.getPrefix(), chanName, nick, reason);
+		ch->broadcast(client, tmpStr);
+		rplStr += tmpStr;
+		ch->removeUser(target);
+		if (ch->getClientCount() < 1)
+			server.removeChannel(chanName);
 	}
 }
 

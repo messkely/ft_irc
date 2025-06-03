@@ -223,22 +223,51 @@
 			n1 JOIN #pele ; n2 JOIN #plato ; n1 PRIVMSG #pele,#plato hey guys [#plato not on chan]
 			n1 JOIN #pele ; n2 JOIN #plato ; n1 JOIN #plato ; n1 PRIVMSG #pele,#plato anyone? [delivered to #pele,#plato]
 		!!	FAILURE
-			
+
 % KICK
-	# target not on channel
-	# you're not on channel
-	# you're not op
-	# does channel remain after last op kick itself
-	# does traget acctually get kicked
-	# errouneous nickname
-	# errouneous channelname
-	# does it execute without comment
-	# does it execute with comment
-	# does it take away colon
-	# has it a default message (the nickname of the kicker)
-	# it can allow either: -a single channel and a list of users. or -as many channels as users (mapping each user to a channel)
 	- PERFORMED TESTS
 		! 	SUCCESS
+		KICK
+		KICK arg
+		KICK arg :naughty
+		KICK # name
+		KICK # name :naughty
+		KICK # name naughty naughty
+		KICK #plato name
+		KICK #plato name :naughty
+		KICK #plato name naughty
+		KICK #plato name naughty naughty
+		JOIN #pele ; KICK #pele
+		KICK #pele :hola amongus [USERNOTINCHAN]
+		JOIN #pele ; KICK #pele wrongNick [USERNOTINCHAN]
+		JOIN #pele ; KICK #pele wrongNick à balè à bala [USERNOTINCHAN]
+		n1 JOIN #pele ; n2 NICK l ; n1 KICK #pele l [USERNOTINCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 [NOTONCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 :going home [NOTONCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 going home [NOTONCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 :going home [NOTONCHAN]
+		n1 JOIN #pele ; n1 KICK #pele,#pele,#pele [NOTENOUGHARGS]
+		n1 JOIN #pele ; n1 KICK #pele key,peele,key1,peele1
+		n1 JOIN #pele ; n1 KICK #pele,#pele key,peele
+		n1 JOIN #pele ; n1 KICK #pele,#pele key1,k2,kei [SYNTAXERR]
+		n1 JOIN #pele ; n1 KICK #pele,#pele key1 [SYNTAXERR]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato a,a [#plato NOTONCHAN, #pele USERNOTINCHAN]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato,# a,a,a, [#plato NOTONCHAN, #pele USERNOTINCHAN, # NOSUCHCHAN]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,plato,#plato,,,, a,a,a,,,, [[#plato NOTONCHAN, plato NOSUCHCHAN, #pele USERNOTINCHAN]]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato,#,#,#,#,# ie,a,a,a,a,a,a
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato,,,,,,,,$ Al,AL,AL
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato a,a,,,,,, going home
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato a,a,,,,,,, going home going home
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n1 KICK #,plato,#pele,#plato,,,,,,, ,,,, [SYNTAXERR]
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n1 KICK #,plato,#pele,#plato,,,,,,, n2,n2,n2,n2,,,,,, goodbye son [# NOSUCHCHAN, plato NOSUCHCHAN, #pele n2 kicked, #plato NOTONCHAN]
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n2 KICK #pele l hahaha [NOTOPERATOR]
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n2 KICK #pele,#plato,#nochan,# n1,n1,n1,n1 [#pele NOTOPERATOR, #plato USERNOTINCHAN, #nochan NOSUCHCHAN, # NOSUCHCHAN]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 [n1 kicked from #pele]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 going home [n1 kicked from #pele with message]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 :going home [n1 kicked from #pele with message]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1,n1,n1,n1,n1,n1 :going home [n1 kicked from #pele with message, USERNOTINCHAN, *(USERNOTINCHAN)]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 [n2 made op]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 ; n1 KICK #pele n1 [channel removed]
 		!!	FAILURE
 
 % QUIT
@@ -251,9 +280,12 @@
 		!!	FAILURE
 
 % server issues revealed while testing
-	server not closing immediately after a valid command has been sent before authentication (due to flush behavior / just linux's nc behavior)
+	server not closing immediately after a valid command has been sent before authentication (linux only)
 % server todos
 	add ingame flag
 	tests to how the server handles data containing not one message in a single send (tests concerning the workings of nc)
 	correction sheet tests
 	check comments for ptential unfinished stuff
+	restore IPV6 support
+	check Desktop err_important
+	flooding client ? (without reply ex NICK)
