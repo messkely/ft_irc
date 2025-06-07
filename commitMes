@@ -1,2 +1,1 @@
-added tests for KICK
-adjusted KICK to reject incorrect messages (syntax wise)
+tested basic program input parsing

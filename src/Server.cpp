@@ -119,11 +119,6 @@ void Server::removeChannel(const std::string& name)
 	}
 }
 
-// std::vector<Channel*>& Server::getChannels()
-// {
-//     return (channels);
-// }
-
 void Server::leaveAllChannels(int fd)
 {
 	Client	&client = clients.getClientByFd(fd);
