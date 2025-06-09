@@ -164,9 +164,6 @@ ssize_t	Client::recvMessages()
 		bytes_read = recv(sockfd, data, RDLEN, 0);
 	}
 
-	if (bytes_read == -1 && (errno == ECONNRESET || errno == ETIMEDOUT))
-		return (CONNCLOSED);
-
 	if (bytes_read == -1 && errno != EWOULDBLOCK)
 		rtimeThrow("recv");
 
