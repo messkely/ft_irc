@@ -85,7 +85,7 @@ void Invite::execute()
 	rplStr = RPL_INVITING(targChan->getName(), targClient->getNickname());
 }
 
-void Invite::resp()
+void Invite::reply()
 {	
 	client << rplStr;
 }

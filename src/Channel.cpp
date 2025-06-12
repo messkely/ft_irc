@@ -29,7 +29,7 @@ void Channel::addUser(Client& user, bool makeOp)
         if (members[i].client == &user)
             return;
     }
-	//  members.insert(members.begin(), Member(&user, makeOp));
+
     members.push_back(Member(&user, makeOp));
 }
 
@@ -83,8 +83,6 @@ void Channel::setOp(Client& user)
             return;
         }
     }
-    // if not a member yet, add as op
-    // addUser(user, true);
 }
 
 void Channel::unsetOp(Client& user)

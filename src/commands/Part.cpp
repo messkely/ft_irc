@@ -28,7 +28,7 @@ void Part::parse()
 		return ;
 	}
 
-	// Split channel names
+	// splitt channel names
 	std::stringstream ssChannels(args[1]);
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
@@ -87,7 +87,7 @@ void Part::execute()
 
 
 
-void Part::resp()
+void Part::reply()
 {
 	client << rplStr;
 }

@@ -85,8 +85,10 @@ void Game::start(ClientMetadata &client)
 	client.game.attemptsLeft = 5;
 	client.game.inGame = true;
 
-	client.sendMessage("Game started! You have 5 attempts to guess the correct word.");
-	client.sendMessage("Send your guess using: PRIVMSG bot :guess <your guess>");
+	client.sendMessage("Game started! You have 5 attempts to guess the correct object name.");
+	client.sendMessage("Use !hint to discover the category the object belongs to.");
+	client.sendMessage("Use !guess followed by a word of your choice.");
+	client.sendMessage("You can always leave the game by sending !quit.");
 	displayInventory(client, "");
 }
 
@@ -111,7 +113,7 @@ void Game::handleGuess(ClientMetadata &client, const std::string &guess)
 
 	if (client.game.attemptsLeft == 0)
 	{
-		client.sendMessage("Out of tries! The answer was '" + client.game.answer + "'.");
+		client.sendMessage("No guess left, The answer was '" + client.game.answer + "'.");
 		client.resetGame();
 		return;
 	}

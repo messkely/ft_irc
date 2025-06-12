@@ -66,14 +66,13 @@ void Mode::parse()
 			return;
 		}
 		std::string mparam = "";
-		// For modes that require a parameter: k, l, or o.
+		// for modes that require a parameter: k, l, or o.
 		if (ch == 'k' || ch == 'l' || ch == 'o')
 		{
 			if (args[paramIndex])
 			{
 				mparam = args[paramIndex];
 				paramIndex++;
-				// rplStr = ERR_NEEDMOREPARAMS((std::string)MODE);
 			}
 		}
 		modeChanges.push_back(ModeChange(currentSign, ch, mparam));
@@ -119,7 +118,7 @@ void Mode::execute()
 		if (ch->isTopicLocked())
 			mode += 't';
 
-		rplStr = RPL_CHANNELMODEIS(channelName, mode, params);
+		rplStr = RPL_CHANNELMODEIS(client.getNickname(), channelName, mode, params);
 		return ;
 	}
 
@@ -166,7 +165,7 @@ void Mode::execute()
 	rplStr += tmpStr;
 }
 
-void Mode::resp()
+void Mode::reply()
 {
 	client << rplStr;
 }

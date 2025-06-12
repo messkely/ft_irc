@@ -29,13 +29,11 @@ void Privmsg::parse()
 		rplStr = ERR_NEEDMOREPARAMS(PRIVMSG);
 		return;
 	}
-	std::stringstream ss(args[1]);
-	std::string target;
+
+	target = args[1];
+
 	// parse the target (user or channel)
-	while (std::getline(ss, target, ','))
-	{
-		(target[0] == '#' || target[0] == '&') ? channelNames.push_back(target) : nicks.push_back(target);
-	}
+	targetIsChannel = (target[0] == '#' || target[0] == '&') ? true : false;
 
 	// join the parts of the message
 	for (int i = 2; i < argc; ++i)
@@ -49,55 +47,54 @@ void Privmsg::parse()
 	}
 	if (msg[0] == ':' && msg.length() > 1)
 		msg.erase(0, 1);
-	rplStr = NORESP;
 }
 
 void Privmsg::execute()
 {
-	std::string currentTopic;
-	Channel *chan;
 	if (rplStr != NORESP)
 		return;
-	size_t nicks_size = nicks.size();
-	size_t chans_size = channelNames.size();
-	size_t len = std::max(chans_size, nicks_size);
+
+	Channel *chan;
 	std::string tmpStr;
-	// Check the channel(s) or user(s) are valid.
-	for (size_t i = 0; i < len; ++i)
+
+	if (targetIsChannel)
 	{
-		// Validite and Process the channels
-		if (i < chans_size)
+		chan = server.getChannel(target);
+		if (!chan)
 		{
-			chan = server.getChannel(channelNames[i]);
-			if (!chan)
-			{
-				rplStr += ERR_NOSUCHCHANNEL(channelNames[i]);
-				continue;
-			}
-			if (!chan->hasUser(client))
-			{
-				rplStr += ERR_CANNOTSENDTOCHAN(client.getNickname(), channelNames[i]);
-				continue;
-			}
-			tmpStr = RPL_PRIVMSG(client.getPrefix(), chan->getName(), msg);
-			chan->broadcast(client, tmpStr);
+			rplStr = ERR_NOSUCHCHANNEL(target);
+			return ;
 		}
 
-		// Validite and Process the users
-		if (i < nicks_size)
+		if (!chan->hasUser(client))
 		{
-			Client& user = server.getClientByNickname(nicks[i]);
-			if (!server.isNicknameTaken(nicks[i]))
-			{
-				rplStr += ERR_NOSUCHNICK(nicks[i]);
-				continue;
-			}
-			user << RPL_PRIVMSG(client.getPrefix(), nicks[i], msg);
+			rplStr = ERR_CANNOTSENDTOCHAN(client.getNickname(), target);
+			return ;
 		}
+
+		tmpStr = RPL_PRIVMSG(client.getPrefix(), chan->getName(), msg);
+		chan->broadcast(client, tmpStr);
+	}
+	else
+	{
+		Client& user = server.getClientByNickname(target);
+		if (!server.isNicknameTaken(target))
+		{
+			rplStr = ERR_NOSUCHNICK(target);
+			return ;
+		}
+
+		if (target == BOT && msg == GAME_START)
+			client.setIsInGame(true);
+
+		if (target == BOT && msg == GAME_QUIT)
+			client.setIsInGame(false);
+
+		user << RPL_PRIVMSG(client.getPrefix(), target, msg);
 	}
 }
 
-void Privmsg::resp()
+void Privmsg::reply()
 {
 	client << rplStr;
 }

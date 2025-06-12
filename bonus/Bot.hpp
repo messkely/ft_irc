@@ -52,7 +52,7 @@ public:
     void operator>>(std::string &input);
     std::stringstream &operator<<(const std::string &msg);
     ClientMetadata &addClient(std::string nick);
-    
+    void           removeClient(std::string nick);
 };
 
 #endif

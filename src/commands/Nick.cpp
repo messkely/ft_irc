@@ -56,7 +56,7 @@ void	Nick::execute()
 	client.setNickname(args[1]);
 }
 
-void	Nick::resp()
+void	Nick::reply()
 {
 	client << rplStr;
 }

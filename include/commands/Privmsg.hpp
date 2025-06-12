@@ -20,16 +20,16 @@
 class Privmsg : public ACommand
 {
 	private:
-		std::vector<std::string> nicks;
-		std::vector<std::string> channelNames;
+		std::string	target;
 		std::string msg;
+		bool		targetIsChannel;
 	public:
 		Privmsg(Server &server, Client &client, char **args, int argc);
 		virtual ~Privmsg();
 
 		virtual void parse();
 		virtual void execute();
-		virtual void resp();
+		virtual void reply();
 
 		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };

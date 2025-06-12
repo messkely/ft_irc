@@ -39,7 +39,7 @@ void	User::execute()
 		rplStr = RPL_WELCOME(client.getNickname(), client.getUsername(), client.getHostname());
 }
 
-void	User::resp()
+void	User::reply()
 {
 	client << rplStr;
 }

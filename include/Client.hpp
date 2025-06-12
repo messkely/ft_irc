@@ -13,6 +13,7 @@ class Client
 		std::string			username;
 		bool				isRejected;
 		bool				hasAuthed;
+		bool				isInGame;
 		std::stringstream	msgBuf;
 		std::stringstream	rplBuf;
 	public:
@@ -34,6 +35,8 @@ class Client
 		void				setIsRejected(bool status);
 		bool				getHasAuthed();
 		void				setHasAuthed(bool status);
+		bool				getIsInGame();
+		void				setIsInGame(bool status);
 		bool				isRegistered();
 		std::string			getPrefix() const;
 		std::string			&operator >> (std::string &line);

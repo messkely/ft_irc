@@ -4,6 +4,7 @@
 
 #define SUCCESS 0
 #define FAILURE 1
+#define ARGS_N 3
 
 using namespace std;
 
@@ -22,7 +23,7 @@ int portParse(char *port)
 
 int argNumParse(int ac)
 {
-    if (ac != 3)
+    if (ac != ARGS_N)
     {
         cerr << "usage: ./ircserv <port> <password>\n";
         return (FAILURE);

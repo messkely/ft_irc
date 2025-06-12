@@ -41,7 +41,7 @@ void	Pass::execute()
 	// no changes to make for PASS
 }
 
-void	Pass::resp()
+void	Pass::reply()
 {
 	client << rplStr;
 }

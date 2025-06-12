@@ -33,7 +33,7 @@ class Server
 		Channel*	getChannel(const std::string& name);
 		void		addChannel(const std::string& name, Channel* channel);
 		void		removeChannel(const std::string& name);
-		void 		leaveAllChannels(int fd);
+		void 		clearClientHistory(int fd);
 
 	private:
 		void		listenForEvents(const std::vector <pollfd> &lst);
@@ -43,7 +43,7 @@ class Server
 		void		handleClientOutReady(Client &client);
 		void		handleReadyFd(const pollfd &pfd);
 		void		runCommandLifeCycle(cmdCreator &creator, std::string &msg, Client &client);
-        void   		procCmds(Client &client);
+        void   		procMessages(Client &client);
 };
 
 #endif

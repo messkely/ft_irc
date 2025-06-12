@@ -16,7 +16,7 @@ Client::Client()
 }
 
 Client::Client(int fd, std::string hostname, bool passwdBased)
-	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(!passwdBased)
+	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(!passwdBased), isInGame(false)
 {
 	std::cout << "Client's Parametrized Constructor called\n";
 }
@@ -107,6 +107,16 @@ void	Client::setHasAuthed(bool status)
 	hasAuthed = status;
 }
 
+bool	Client::getIsInGame()
+{
+	return (isInGame);
+}
+
+void	Client::setIsInGame(bool status)
+{
+	isInGame = status;
+}
+
 bool	Client::isRegistered()
 {
 	return (!nickname.empty() && !username.empty());
@@ -142,8 +152,8 @@ std::string	&Client::operator >> (std::string &line)
 // append reply to the output buffer
 const std::ostream	&Client::operator << (const std::string &rplStr)
 {
-	// if (rplBuf.str().size() > MAX_RPLBUF_BYTES) // too many buffered replies indicating flooding
-	// 	setIsRejected(true);
+	if (rplBuf.str().size() > MAX_RPLBUF_BYTES) // too many buffered replies indicating flooding
+		setIsRejected(true);
 
 	rplBuf << rplStr;
 
@@ -164,7 +174,7 @@ ssize_t	Client::recvMessages()
 		bytes_read = recv(sockfd, data, RDLEN, 0);
 	}
 
-	if (bytes_read == -1 && errno != EWOULDBLOCK)
+	if (bytes_read == -1 && (errno != EWOULDBLOCK && errno != EAGAIN))
 		rtimeThrow("recv");
 
 	return (bytes_read);
@@ -191,7 +201,7 @@ void	Client::sendReplies()
 			rest -= (bytes_sent = send(sockfd, cLine + (line.size() - rest), rest, 0));
 	}
 
-	if (bytes_sent == -1 && errno != EWOULDBLOCK)
+	if (bytes_sent == -1 && (errno != EWOULDBLOCK && errno != EAGAIN))
 		rtimeThrow("send");
 
 	if (rplBuf) // handle would-block

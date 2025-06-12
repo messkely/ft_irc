@@ -119,17 +119,20 @@ void Server::removeChannel(const std::string& name)
 	}
 }
 
-void Server::leaveAllChannels(int fd)
+// leave all channels
+// leave all invite lists
+// leave bot game
+void Server::clearClientHistory(int fd)
 {
 	Client	&client = clients.getClientByFd(fd);
-	
+
     for (size_t idx = 0; idx < channels.size(); ++idx)
     {
 		Channel *ch = channels[idx];
 		// leave as an invited memeber
 		if (ch->isInvited(client))
 			ch->inviteListRemove(client);
-		// leave as a memeber
+		// leave as a member
         if (ch->hasUser(client))
         {
 			std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
@@ -142,8 +145,12 @@ void Server::leaveAllChannels(int fd)
 			}
         }
     }
-
-    return;
+	// notify bot about leaving
+	if (client.getIsInGame() && isNicknameTaken(BOT))
+	{
+		cerr << "sending game leave notificaton to bot\n";
+		getClientByNickname(BOT) << RPL_PRIVMSG(client.getPrefix(), BOT, GAME_QUIT);
+	}
 }
 
 // listen to all sockets, for recv ready
@@ -211,7 +218,7 @@ void	Server::closeCnt(const Client &client)
 	int	fd = client.getSockfd();
 
 	monitor.remove(fd);
-	leaveAllChannels(fd);
+	clearClientHistory(fd);
 	clients.remove(fd);
 }
 
@@ -225,7 +232,7 @@ void	Server::handleClientInReady(Client &client)
 		return ;
 	}
 
-	procCmds(client);
+	procMessages(client);
 }
 
 void	Server::handleClientOutReady(Client &client)
@@ -276,6 +283,12 @@ static bool	isCommandDropped(Client &client, string cmdName)
 		return (true);
 	}
 
+	if (cmdName == NICK && client.getIsInGame())
+	{
+		client << RPL_MSG(client.getNickname(), "you cannot change your nickname while in game!");
+		return (true);
+	}
+
 	return (false);
 }
 
@@ -288,7 +301,7 @@ void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &clien
 
 	cmd->parse();
 	cmd->execute();
-	cmd->resp();
+	cmd->reply();
 
 	delete cmd;
 }
@@ -301,7 +314,7 @@ static void	handleUnknownCommand(Client &client, string msg)
 }
 
 // process messages (i.e CRLF terminated lines) stored in client buffer
-void	Server::procCmds(Client &client)
+void	Server::procMessages(Client &client)
 {
 	string		msg;
 	int			i;

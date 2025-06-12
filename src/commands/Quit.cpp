@@ -34,7 +34,7 @@ void	Quit::execute()
 	rplStr = RPL_QUIT(msg);
 }
 
-void	Quit::resp()
+void	Quit::reply()
 {
 	client << rplStr;
 }

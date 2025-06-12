@@ -136,22 +136,30 @@ void Bot::run()
 			ClientMetadata& clientRef = addClient(nickname);
 			std::string command = msg.substr(privmsg_pos + 10 + nick.length());
 			if (command == "!hello" && !clientRef.game.inGame)
-				rplBuf << RPL_MSG(nickname, "Hi! how can i help you? PS: all i can do is play a game (and beat yoass of course) }:^) ");
+			{
+				rplBuf << RPL_MSG(nickname, "Hi! " + nickname + ", how can i help you?");
+				rplBuf << RPL_MSG(nickname, "PS: all i can do is play a game (and beat yoass of course }:) send !game to start.");
+				rplBuf << RPL_MSG(nickname, "And remember, !hint is for the weak!");
+			}
 			else if (command == "!game" && !clientRef.game.inGame)
 				game->start(clientRef);
 			else if (command == "!hint")
 				game->sendHint(clientRef);
-			else if (command.find("guess ") == 0)
+			else if (command.find("!guess ") == 0 && clientRef.game.inGame)
 			{
-				std::string guess = command.substr(6);
+				std::string guess = command.substr(7);
 				for (size_t i = 0; i < guess.length(); ++i)
 				guess[i] = std::tolower(guess[i]);
 				game->handleGuess(clientRef, guess);
+				if (!clientRef.game.inGame)
+					removeClient(nickname);
 			}
+			else if (command == "!quit" && clientRef.game.inGame)
+				removeClient(nickname);
 			else if (!clientRef.game.inGame)
 				rplBuf << RPL_MSG(nickname, "I do not speak that language!. Try !hello or !game instead :D");
 			else
-				rplBuf << RPL_MSG(nickname, "only '!hint' and 'guess' while in the game.");
+				rplBuf << RPL_MSG(nickname, "only '!hint', '!guess' or '!quit' while in the game.");
 			sendReplies();
 		}
 	}
@@ -167,4 +175,16 @@ ClientMetadata &Bot::addClient(std::string nick)
 	}
 	ClientData.push_back(ClientMetadata(nick, sockfd));
 	return (ClientData.back());
+}
+
+void	Bot::removeClient(std::string nick)
+{
+	for (std::vector<ClientMetadata>::iterator it = ClientData.begin(); it != ClientData.end(); ++it)
+	{
+		if (nick == it->nick)
+		{
+			ClientData.erase(it);
+			return ;
+		}
+	}
 }

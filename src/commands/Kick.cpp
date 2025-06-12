@@ -112,7 +112,7 @@ void Kick::execute()
 	}
 }
 
-void Kick::resp()
+void Kick::reply()
 {
 	client << rplStr;
 }

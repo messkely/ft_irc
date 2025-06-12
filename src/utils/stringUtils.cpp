@@ -1,7 +1,7 @@
 #include <string>
 #define ZERO '0'
 
-void	ft_itoa(size_t n, std::string &number) // 150
+void	ft_itoa(size_t n, std::string &number)
 {
 
 	if (n < 10)

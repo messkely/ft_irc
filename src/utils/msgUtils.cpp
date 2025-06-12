@@ -101,7 +101,7 @@ bool	msgHasCommand(std::string msg, std::string cmd)
 {
 	size_t	pos = msg.find(cmd);
 
-	while (pos != std::string::npos)
+	if (pos != std::string::npos)
 	{
 		if (
 				(!pos && (msg[cmd.size()] == SPACE || msg.size() == cmd.size()))
@@ -114,8 +114,6 @@ bool	msgHasCommand(std::string msg, std::string cmd)
 				)
 		)
 			return (true);
-
-		pos = msg.find(cmd, pos + cmd.size());
 	}
 
 	return (false);

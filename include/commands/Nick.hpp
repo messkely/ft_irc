@@ -15,7 +15,7 @@ class Nick : public ACommand
 
 		void			parse();
 		void			execute();
-		void			resp();
+		void			reply();
 
 		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 

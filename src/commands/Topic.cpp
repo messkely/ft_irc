@@ -71,9 +71,9 @@ void Topic::execute()
 	{
 		currentTopic = chan->getTopic();
 		if (!currentTopic.empty())
-			rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), currentTopic);
+			rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), currentTopic, client.getNickname());
 		else
-			rplStr += RPL_NOTOPIC(chan->getName());
+			rplStr += RPL_NOTOPIC(chan->getName(), client.getNickname());
 		return;
 	}
 	// change the Topic (or clear).
@@ -84,12 +84,11 @@ void Topic::execute()
 	}
 
 	chan->setTopic((topic[0] == ':' && topic.length() == 1) ? "" : topic);
-	// rplStr += "Hey everyone, your attention please\r\n";
-	rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), chan->getTopic());
+	rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), chan->getTopic(), client.getNickname());
 	return;
 }
 
-void Topic::resp()
+void Topic::reply()
 {
 	client << rplStr;
 }
