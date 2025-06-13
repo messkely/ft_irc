@@ -5,12 +5,12 @@
 Nick::Nick(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
 {
-	std::cout << "Nick's Paramterized Constructor called\n";
+	// std::cout << "Nick's Paramterized Constructor called\n";
 }
 
 Nick::~Nick() 
 {
-	std::cout << "Nick's Destructor called\n";
+	// std::cout << "Nick's Destructor called\n";
 }
 
 void	Nick::parse()

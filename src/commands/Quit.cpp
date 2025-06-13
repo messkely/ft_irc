@@ -5,12 +5,12 @@
 Quit::Quit(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
 {
-	std::cout << "Quit's Parametrized Constructor called\n";
+	// std::cout << "Quit's Parametrized Constructor called\n";
 }
 
 Quit::~Quit() 
 {
-	std::cout << "Quit's Destructor called\n";
+	// std::cout << "Quit's Destructor called\n";
 }
 
 void	Quit::parse()

@@ -15,7 +15,7 @@ using namespace std;
 Server::Server(const char *port, const char *passwd)
 	: servSock(getServSock(port)), passwd(passwd)
 {
-	std::cout << "Server's Parametrized Constructor called\n";
+	// std::cout << "Server's Parametrized Constructor called\n";
 
 	string	tmpCmdNames[CMDS_N] = {PASS, NICK, USER, JOIN, MODE, PART, TOPIC, KICK, QUIT, PRIVMSG, INVITE}; // add command names here
 
@@ -31,7 +31,7 @@ Server::Server(const char *port, const char *passwd)
 
 Server::~Server() 
 {
-	std::cout << "Server's Destructor called\n";
+	// std::cout << "Server's Destructor called\n";
 
 	close(servSock);
 }
@@ -72,13 +72,13 @@ bool	Server::isNicknameTaken(string nickname)
 	return (getClientByNickname(nickname).getNickname() == nickname);
 }
 
-// returns matching client if present; the last client if not
+// returns matching client if present; the placeholder client otherwise
 Client	&Server::getClientByNickname(string nickname)
 {
 	return (clients.getClientByNickname(nickname));
 }
 
-// returns matching client if present; the last client if not
+// returns matching client if present; the placeholder client otherwise
 Client	&Server::getClientByFd(int fd)
 {
 	return (clients.getClientByFd(fd));
@@ -147,26 +147,24 @@ void Server::clearClientHistory(int fd)
     }
 	// notify bot about leaving
 	if (client.getIsInGame() && isNicknameTaken(BOT))
-	{
-		cerr << "sending game leave notificaton to bot\n";
 		getClientByNickname(BOT) << RPL_PRIVMSG(client.getPrefix(), BOT, GAME_QUIT);
-	}
 }
 
-// listen to all sockets, for recv ready
+// listen to all sockets, for recv ready (except when client is rejected or closed connection)
 // and only to those with non empty client replies buf, for send ready
-void	Server::listenForEvents(const vector <pollfd> &lst)
+void	Server::listenForEvents(const vector<pollfd> &lst)
 {
-	int	fd;
+	int		fd;
 
 	for (size_t i = 0; i < lst.size(); i++)
 	{
 		fd = lst[i].fd;
+		Client	&client = getClientByFd(fd);
 
-		if (fd == servSock || !getClientByFd(fd).readyToSend())
-			monitor.setEvents(fd, POLLIN);
-		else if (getClientByFd(fd).readyToSend() && getClientByFd(fd).getIsRejected())
+		if (client.getIsRemoteClosed() || client.getIsRejected())
 			monitor.setEvents(fd, POLLOUT);
+		else if (fd == servSock || !client.readyToSend())
+			monitor.setEvents(fd, POLLIN);
 		else
 			monitor.setEvents(fd, POLLIN | POLLOUT);
 	}
@@ -226,11 +224,8 @@ void	Server::handleClientInReady(Client &client)
 {
 	int closed = !(client.recvMessages());
 
-	if (closed) // connection closed
-	{
-		closeCnt(client);
-		return ;
-	}
+	if (closed) // remote side closing connection
+		client.setIsRemoteClosed(true);
 
 	procMessages(client);
 }
@@ -249,7 +244,7 @@ void	Server::handleReadyFd(const pollfd &pfd)
 	{
 		handleClientOutReady(client);
 		// close after rplBuf flush
-		if (client.getIsRejected())
+		if (client.getIsRemoteClosed() || client.getIsRejected())
 			closeCnt(client);
 	}
 
@@ -269,10 +264,14 @@ void	Server::handleReadyFd(const pollfd &pfd)
 // ;false otherwise
 static bool	isCommandDropped(Client &client, string cmdName)
 {
+	if (client.getIsRejected())
+		return (true);
+
 	if (cmdName != PASS && !client.getHasAuthed())
 	{
 		client << ERR_CLIENTREJECTED();
 		client.setIsRejected(true);
+		client.setIsRemoteClosed(true);
 		return (true);
 	}
 
@@ -285,7 +284,7 @@ static bool	isCommandDropped(Client &client, string cmdName)
 
 	if (cmdName == NICK && client.getIsInGame())
 	{
-		client << RPL_MSG(client.getNickname(), "you cannot change your nickname while in game!");
+		client << RPL_MSG(client.getNickname(), CANT_NICK);
 		return (true);
 	}
 
@@ -308,7 +307,12 @@ void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &clien
 
 static void	handleUnknownCommand(Client &client, string msg)
 {
-	char	**args = splitMsg(msg.c_str(), SPACE);
+	char	**args;
+
+	if (client.getIsRejected())
+		return ;
+
+	args = splitMsg(msg.c_str(), SPACE);
 
 	client << ERR_UNKNOWNCOMMAND(client.getNickname(), args[0]);
 }
@@ -337,6 +341,6 @@ void	Server::procMessages(Client &client)
 		if (i == CMDS_N)
 			handleUnknownCommand(client, msg);
 
-		client >> msg;
+		cerr << (client >> msg) << endl;
 	}
 }

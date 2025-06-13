@@ -12,25 +12,25 @@
 
 Client::Client()
 {
-	std::cout << "Client's Default Constructor called\n";
+	// std::cout << "Client's Default Constructor called\n";
 }
 
 Client::Client(int fd, std::string hostname, bool passwdBased)
-	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(!passwdBased), isInGame(false)
+	: sockfd(fd), hostname(hostname), isRemoteClosed(false), isRejected(false), hasAuthed(!passwdBased), isInGame(false)
 {
-	std::cout << "Client's Parametrized Constructor called\n";
+	// std::cout << "Client's Parametrized Constructor called\n";
 }
 
 Client::Client(const Client &other) 
 {
-	std::cout << "Client's Copy Constructor called\n";
+	// std::cout << "Client's Copy Constructor called\n";
 
 	*this = other;
 }
 
 Client::~Client() 
 {
-	std::cout << "Client's Destructor called\n";
+	// std::cout << "Client's Destructor called\n";
 }
 
 
@@ -40,8 +40,10 @@ Client	&Client::operator = (const Client &rhs)
 	hostname = rhs.hostname;
 	nickname = rhs.nickname;
 	username = rhs.username;
+	isRemoteClosed = rhs.isRemoteClosed;
 	isRejected = rhs.isRejected;
 	hasAuthed = rhs.hasAuthed;
+	isInGame = rhs.isInGame;
 
 	return (*this);
 }
@@ -86,6 +88,18 @@ void	Client::setUsername(const std::string &newUsername)
 	username = newUsername;
 }
 
+// returns true when the remote side has issued a CLOSE; flase otherwise
+bool	Client::getIsRemoteClosed()
+{
+	return (isRemoteClosed);
+}
+
+void	Client::setIsRemoteClosed(bool status)
+{
+	isRemoteClosed = status;
+}
+
+// returns true if the client sent a valid command before completing authentication or if they issued QUIT; false otherwise
 bool	Client::getIsRejected()
 {
 	return (isRejected);

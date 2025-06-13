@@ -283,12 +283,69 @@
 	server not closing immediately after a valid command has been sent before authentication (linux only)
 
 % server todos
+	how does the termination happen (when a call to receive returns 0)
 	restore IPV6 support
+	remove all logging from the server
 	tests to how the server handles data containing not one message in a single send (tests concerning the workings of nc)
 	correction sheet tests
 	check Desktop err_important
 	flooding client ? (without reply ex NICK)
-	remove all logging from the server
 
 % NC RELATED
 	while true; do nc 0 4950 < instructions &; sleep 1; kill $(pgrep nc); done
+	nc << del
+		NICK al
+		del
+	nc << del
+		PASS
+		PASS wrong
+		PASS mypass
+		NICK al
+		JOIN #pele
+		JOIN 0
+	nc << del
+		PRIVMSG
+		NICK
+		WRONGCMD
+		JOIN #pele
+	nc << del
+		PASS wrong
+		NICK al
+		USER i i i i
+		JOIN #pele
+	nc << del
+		PASS mypass
+		JOIN #pele
+		NICK al
+		USER i i i i
+		JOIN 0
+	nc << del
+		PRIVMSG
+		MODE
+		PASS mypass
+		USER k k k k
+		NICK al
+		JOIN #pele
+	nc << del
+		WRONGCMD
+		CGI
+		PHP
+		NICK
+		CGI
+		JOIN #pele
+	nc << del
+		PASS mypass
+		PASS mypass
+		NICK al
+		USER i i i i
+		USER i i i i
+		MODE #pele +i
+		JOIN #pele
+		KICK l #pele
+	nc << del
+		PASS mypass
+		QUIT going home
+		NICK al
+		USER i i i i
+		JOIN #pele
+	< infile | nc (writing the different here_doc tests to infile would result in the same behavior)

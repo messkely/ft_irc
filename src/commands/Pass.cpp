@@ -5,12 +5,12 @@
 Pass::Pass(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
 {
-	std::cout << "Pass's Parametrized Constructor called\n";
+	// std::cout << "Pass's Parametrized Constructor called\n";
 }
 
 Pass::~Pass()
 {
-	std::cout << "Pass's Destructor called\n";
+	// std::cout << "Pass's Destructor called\n";
 }
 
 void	Pass::parse()

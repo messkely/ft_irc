@@ -4,14 +4,14 @@
 
 ClientList::ClientList()
 {
-	std::cout << "ClientList's Default Constructor called\n";
+	// std::cout << "ClientList's Default Constructor called\n";
 
 	add(-1, "", false); // adding a placeholder
 }
 
 ClientList::~ClientList() 
 {
-	std::cout << "ClientList's Destructor called\n";
+	// std::cout << "ClientList's Destructor called\n";
 
 	for (t_clients::iterator it = lst.begin(); it != lst.end(); it++)
 		close(it->getSockfd());
@@ -37,7 +37,7 @@ void	ClientList::remove(int fd)
 	}
 }
 
-// returns matching client if present; the last client if not
+// returns matching client if present; the placeholder client otherwise
 Client	&ClientList::getClientByFd(int fd)
 {
 	for (t_clients::iterator it = lst.begin(); it != lst.end(); it++)
@@ -46,10 +46,10 @@ Client	&ClientList::getClientByFd(int fd)
 			return (*it);
 	}
 
-	return (*(--lst.end()));
+	return (*(lst.begin()));
 }
 
-// returns matching client if present; the last client if not
+// returns matching client if present; the placeholder client otherwise
 Client	&ClientList::getClientByNickname(std::string nickname)
 {
 	for (t_clients::iterator it = lst.begin(); it != lst.end(); it++)
@@ -58,5 +58,5 @@ Client	&ClientList::getClientByNickname(std::string nickname)
 			return (*it);
 	}
 
-	return (*(--lst.end()));
+	return (*(lst.begin()));
 }

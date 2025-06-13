@@ -38,6 +38,7 @@
 #  define QUIT_ARGS_N 1
 
 // messages
-#  define  GAME_START "!game"
-#  define  GAME_QUIT "!quit"
+#  define GAME_START "!game"
+#  define GAME_QUIT "!quit"
+#  define CANT_NICK "you cannot change your nickname while in game!"
 #endif

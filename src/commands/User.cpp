@@ -5,12 +5,12 @@
 User::User(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
 {
-	std::cout << "User's Parametrized Constructor called\n";
+	// std::cout << "User's Parametrized Constructor called\n";
 }
 
 User::~User() 
 {
-	std::cout << "User's Destructor called\n";
+	// std::cout << "User's Destructor called\n";
 }
 
 void	User::parse()

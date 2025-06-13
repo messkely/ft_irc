@@ -1,12 +1,2 @@
-added errno EAGAIN check in both Client::recvMessages and Client::sendReplies when send/recv return with failure
-resp and procCmds were replaced by reply and procMessages respectively
-removed the recursive search for a valid command in the received message and limited it to a single one (msgUtils.cpp -> msgHasCommand)
-went over all comments for potential unfinished tasks
-added Bot::removeClient which takes the nickname of the target ClientMetadata object and removes it from Bot::ClientData
-added !quit option to bot which calls Bot::removeClient
-prevented client from changing nickname when in game
-added a call to Bot::removeClient after game termination in both (win) and (out of guesses) cases
-added behavior for notifying bot when in game client is leaving the server
-changed Server::leaveAllChannels to clearAllHistory (leaves channels/invite lists and notfies bot when in game)
-fixed RPL_CHANNELMODEIS reply for limechat
-fixed RPL_TOPIC/NOTOPIC replies for limechat
+tweaked the connection termination behavior so that it allows messages sent right before the remote side close to be processed
+added nc related tests

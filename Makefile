@@ -41,10 +41,10 @@ bonus/%.o : bonus/%.cpp $(BONUS_HEADERS)
 	$(CXX) -c $< -o $@ $(FLAGS)
 
 $(NAME)	: $(OBJS)
-	$(CXX) $^ -o $@ $(FLAGS) -fsanitize=address
+	$(CXX) $^ -o $@ $(FLAGS)
 
 $(BONUS_NAME) : $(BONUS_OBJS)
-	$(CXX) $(FLAGS) -o $@ $^ -fsanitize=address
+	$(CXX) $(FLAGS) -o $@ $^
 
 clean	:
 	@rm -rf $(OBJS) $(BONUS_OBJS)

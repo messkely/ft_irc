@@ -11,6 +11,7 @@ class Client
 		std::string			hostname;
 		std::string			nickname;
 		std::string			username;
+		bool				isRemoteClosed;
 		bool				isRejected;
 		bool				hasAuthed;
 		bool				isInGame;
@@ -31,6 +32,8 @@ class Client
 		void				setNickname(const std::string &newNickname);
 		std::string			getUsername();
 		void				setUsername(const std::string &newUsername);
+		bool				getIsRemoteClosed();
+		void				setIsRemoteClosed(bool status);
 		bool				getIsRejected();
 		void				setIsRejected(bool status);
 		bool				getHasAuthed();

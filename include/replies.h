@@ -34,7 +34,7 @@
 #define ERR_INVALIDMODEPARM(channelname, mode)			    PREFIX "696 " + channelname + " Invalid mode parameter. " + mode + LF
 
 // Replies :
-#define RPL_WELCOME(nick, user, host)					    PREFIX "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!~" + user + '@' + host
+#define RPL_WELCOME(nick, user, host)					    PREFIX "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!~" + user + '@' + host + LF
 #define RPL_NAMREPLY(sender, channel, users)    		    PREFIX "353 " + sender + " @ " + channel + " :" + users + LF
 #define RPL_ENDOFNAMES(sender, channel)        			    PREFIX "366 " + sender + " " + channel + " :End of NAMES list" LF
 #define RPL_MODE_OP(nick, user, host, channel) 			    ":" + nick + "!" + user + "@" + host + " MODE " + channel + " +o @" + nick + LF
