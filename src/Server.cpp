@@ -52,7 +52,7 @@ void    Server::launch()
 		{
 			if (lst[i].revents & POLLIN || lst[i].revents & POLLOUT || lst[i].revents & POLLERR)
 			{
-				handleReadyFd(lst[i]);
+				handleReadyFd(lst[i].fd, lst[i].revents);
 				fdsHandled++;
 			}
 
@@ -236,11 +236,11 @@ void	Server::handleClientOutReady(Client &client)
 		client.sendReplies();
 }
 
-void	Server::handleReadyFd(const pollfd &pfd)
+void	Server::handleReadyFd(int fd, short revents)
 {
-	Client	&client = clients.getClientByFd(pfd.fd);
+	Client	&client = clients.getClientByFd(fd);
 
-	if (pfd.revents & POLLOUT)
+	if (revents & POLLOUT)
 	{
 		handleClientOutReady(client);
 		// close after rplBuf flush
@@ -248,15 +248,15 @@ void	Server::handleReadyFd(const pollfd &pfd)
 			closeCnt(client);
 	}
 
-	if (pfd.revents & POLLIN)
+	if (revents & POLLIN)
 	{
-		if (pfd.fd == servSock)
+		if (fd == servSock)
 			acceptCnt();
 		else
 			handleClientInReady(client);
 	}
 
-	if (pfd.revents & POLLERR)
+	if (revents & POLLERR)
 		closeCnt(client);
 }
 
@@ -315,6 +315,8 @@ static void	handleUnknownCommand(Client &client, string msg)
 	args = splitMsg(msg.c_str(), SPACE);
 
 	client << ERR_UNKNOWNCOMMAND(client.getNickname(), args[0]);
+
+	freeMsgArgs(args);
 }
 
 // process messages (i.e CRLF terminated lines) stored in client buffer

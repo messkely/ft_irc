@@ -283,13 +283,12 @@
 	server not closing immediately after a valid command has been sent before authentication (linux only)
 
 % server todos
-	how does the termination happen (when a call to receive returns 0)
+	test nc with the option that interprets control characters
 	restore IPV6 support
 	remove all logging from the server
-	tests to how the server handles data containing not one message in a single send (tests concerning the workings of nc)
 	correction sheet tests
 	check Desktop err_important
-	flooding client ? (without reply ex NICK)
+	test the closeSoFar approach with leaks program
 
 % NC RELATED
 	while true; do nc 0 4950 < instructions &; sleep 1; kill $(pgrep nc); done

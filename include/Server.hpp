@@ -41,7 +41,7 @@ class Server
 		void		closeCnt(const Client &client);
 		void		handleClientInReady(Client &client);
 		void		handleClientOutReady(Client &client);
-		void		handleReadyFd(const pollfd &pfd);
+		void		handleReadyFd(int fd, short revents);
 		void		runCommandLifeCycle(cmdCreator &creator, std::string &msg, Client &client);
         void   		procMessages(Client &client);
 };
