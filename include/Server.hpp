@@ -28,13 +28,12 @@ class Server
 		Client		&getClientByNickname(std::string nickname);
 		Client		&getClientByFd(int fd);
 		bool		isNicknameTaken(std::string nickname);
-
+		
 		// channel management
 		Channel*	getChannel(const std::string& name);
 		void		addChannel(const std::string& name, Channel* channel);
 		void		removeChannel(const std::string& name);
-		std::vector<Channel*>& getChannels();
-		void 		leaveAllChannels(int fd);
+		void 		clearClientHistory(int fd);
 
 	private:
 		void		listenForEvents(const std::vector <pollfd> &lst);
@@ -42,9 +41,9 @@ class Server
 		void		closeCnt(const Client &client);
 		void		handleClientInReady(Client &client);
 		void		handleClientOutReady(Client &client);
-		void		handleReadyFd(const pollfd &pfd);
+		void		handleReadyFd(int fd, short revents);
 		void		runCommandLifeCycle(cmdCreator &creator, std::string &msg, Client &client);
-        void   		procCmds(Client &client);
+        void   		procMessages(Client &client);
 };
 
 #endif

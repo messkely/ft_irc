@@ -37,7 +37,7 @@ int	getBoundSock(addrinfo *res)
 		{
 			close(fd);
 			continue ;
-		} 
+		}
 
 		if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1 ||
 			bind(fd, p->ai_addr, p->ai_addrlen) == -1)
@@ -53,7 +53,7 @@ int	getBoundSock(addrinfo *res)
 
 	if (p == NULL)
 	{
-		cerr << "server: failed to bind address\n";
+		cerr << "ircserv: failed to bind address\n";
 		exit(FAILURE);
 	}
 
@@ -62,11 +62,11 @@ int	getBoundSock(addrinfo *res)
 
 addrinfo	*getaddrList(const char *port)
 {
-	addrinfo    hints, *res;
+	addrinfo    hints, *res = NULL;
 	int			gaiStatus;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET; // reset to AF_UNSPEC later
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 

@@ -3,8 +3,6 @@
 # include <vector>
 # include <poll.h>
 
-# define TIMEOUT 500
-
 class Monitor
 {
 	private:

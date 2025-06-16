@@ -28,18 +28,15 @@ void Part::parse()
 		return ;
 	}
 
-	// Split channel names
+	// splitt channel names
 	std::stringstream ssChannels(args[1]);
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
 	{
-		if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
-		{
-			rplStr = ERR_NOSUCHCHANNEL(channel);
-			return;
-		}
-		if (!channel.empty())
-			channelNames.push_back(channel);
+		if (channel.empty())
+			continue ;
+	
+		channelNames.push_back(channel);
 	}
 
 	if (argc > 2)
@@ -90,7 +87,7 @@ void Part::execute()
 
 
 
-void Part::resp()
+void Part::reply()
 {
 	client << rplStr;
 }

@@ -16,7 +16,7 @@ Client::Client()
 }
 
 Client::Client(int fd, std::string hostname, bool passwdBased)
-	: sockfd(fd), hostname(hostname), isRejected(false), hasAuthed(false), isAccepted(!passwdBased)
+	: sockfd(fd), hostname(hostname), isRemoteClosed(false), isRejected(false), hasAuthed(!passwdBased), isInGame(false)
 {
 	// std::cout << "Client's Parametrized Constructor called\n";
 }
@@ -40,9 +40,10 @@ Client	&Client::operator = (const Client &rhs)
 	hostname = rhs.hostname;
 	nickname = rhs.nickname;
 	username = rhs.username;
+	isRemoteClosed = rhs.isRemoteClosed;
 	isRejected = rhs.isRejected;
 	hasAuthed = rhs.hasAuthed;
-	isAccepted = rhs.isAccepted;
+	isInGame = rhs.isInGame;
 
 	return (*this);
 }
@@ -87,6 +88,18 @@ void	Client::setUsername(const std::string &newUsername)
 	username = newUsername;
 }
 
+// returns true when the remote side has issued a CLOSE; flase otherwise
+bool	Client::getIsRemoteClosed()
+{
+	return (isRemoteClosed);
+}
+
+void	Client::setIsRemoteClosed(bool status)
+{
+	isRemoteClosed = status;
+}
+
+// returns true if the client sent a valid command before completing authentication or if they issued QUIT; false otherwise
 bool	Client::getIsRejected()
 {
 	return (isRejected);
@@ -108,25 +121,14 @@ void	Client::setHasAuthed(bool status)
 	hasAuthed = status;
 }
 
-// returns true if client has passed passwd validation; false otherwise
-bool	Client::getIsAccepted()
+bool	Client::getIsInGame()
 {
-	return (isAccepted);
+	return (isInGame);
 }
 
-void	Client::setIsAccepted(bool status)
+void	Client::setIsInGame(bool status)
 {
-	isAccepted = status;
-}
-
-bool	Client::getIsInvited()
-{
-	return (isInvited);
-}
-
-void	Client::setIsInvited(bool status)
-{
-	isInvited = status;
+	isInGame = status;
 }
 
 bool	Client::isRegistered()
@@ -164,8 +166,8 @@ std::string	&Client::operator >> (std::string &line)
 // append reply to the output buffer
 const std::ostream	&Client::operator << (const std::string &rplStr)
 {
-	// if (rplBuf.str().size() > MAX_RPLBUF_BYTES) // too many buffered replies indicating flooding
-	// 	setIsRejected(true);
+	if (rplBuf.str().size() > MAX_RPLBUF_BYTES) // too many buffered replies indicating flooding
+		setIsRejected(true);
 
 	rplBuf << rplStr;
 
@@ -186,10 +188,7 @@ ssize_t	Client::recvMessages()
 		bytes_read = recv(sockfd, data, RDLEN, 0);
 	}
 
-	if (bytes_read == -1 && (errno == ECONNRESET || errno == ETIMEDOUT))
-		return (CONNCLOSED);
-
-	if (bytes_read == -1 && errno != EWOULDBLOCK)
+	if (bytes_read == -1 && (errno != EWOULDBLOCK && errno != EAGAIN))
 		rtimeThrow("recv");
 
 	return (bytes_read);
@@ -216,7 +215,7 @@ void	Client::sendReplies()
 			rest -= (bytes_sent = send(sockfd, cLine + (line.size() - rest), rest, 0));
 	}
 
-	if (bytes_sent == -1 && errno != EWOULDBLOCK)
+	if (bytes_sent == -1 && (errno != EWOULDBLOCK && errno != EAGAIN))
 		rtimeThrow("send");
 
 	if (rplBuf) // handle would-block

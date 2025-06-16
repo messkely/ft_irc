@@ -11,12 +11,12 @@ class Client
 		std::string			hostname;
 		std::string			nickname;
 		std::string			username;
+		bool				isRemoteClosed;
 		bool				isRejected;
 		bool				hasAuthed;
-		bool				isAccepted;
+		bool				isInGame;
 		std::stringstream	msgBuf;
 		std::stringstream	rplBuf;
-		bool				isInvited;
 	public:
 		Client();
 		Client(int fd, std::string hostname, bool passwdBased);
@@ -32,14 +32,14 @@ class Client
 		void				setNickname(const std::string &newNickname);
 		std::string			getUsername();
 		void				setUsername(const std::string &newUsername);
+		bool				getIsRemoteClosed();
+		void				setIsRemoteClosed(bool status);
 		bool				getIsRejected();
 		void				setIsRejected(bool status);
 		bool				getHasAuthed();
 		void				setHasAuthed(bool status);
-		bool				getIsAccepted();
-		void				setIsAccepted(bool status);
-		bool				getIsInvited();
-		void				setIsInvited(bool status);
+		bool				getIsInGame();
+		void				setIsInGame(bool status);
 		bool				isRegistered();
 		std::string			getPrefix() const;
 		std::string			&operator >> (std::string &line);

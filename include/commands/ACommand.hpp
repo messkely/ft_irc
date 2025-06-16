@@ -21,7 +21,7 @@ class ACommand
 
 		virtual void	parse() = 0;
 		virtual void	execute() = 0;
-		virtual void	resp() = 0;
+		virtual void	reply() = 0;
 };
 
 #endif

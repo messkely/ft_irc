@@ -1,0 +1,50 @@
+apple,fruit
+banana,fruit
+orange,fruit
+grape,fruit
+pineapple,fruit
+mango,fruit
+lemon,fruit
+watermelon,fruit
+peach,fruit
+cherry,fruit
+dog,animal
+cat,animal
+elephant,animal
+tiger,animal
+lion,animal
+monkey,animal
+rabbit,animal
+zebra,animal
+giraffe,animal
+bear,animal
+spoon,kitchen object
+fork,kitchen object
+knife,kitchen object
+plate,kitchen object
+cup,kitchen object
+bowl,kitchen object
+pan,kitchen object
+pot,kitchen object
+whisk,kitchen object
+ladle,kitchen object
+hammer,tool
+wrench,tool
+screwdriver,tool
+drill,tool
+pliers,tool
+saw,tool
+nail,tool
+screw,tool
+chisel,tool
+tape measure,tool
+car,vehicle
+bicycle,vehicle
+motorcycle,vehicle
+bus,vehicle
+train,vehicle
+airplane,vehicle
+boat,vehicle
+truck,vehicle
+van,vehicle
+scooter,vehicle

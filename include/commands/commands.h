@@ -29,11 +29,16 @@
 #  define QUIT "QUIT"
 #  define INVITE "INVITE"
 #  define PRIVMSG "PRIVMSG"
+#  define BOT "bot"
 
 // args number (cmd name included)
-# define PASS_ARGS_N 2
-# define NICK_ARGS_N 2
-# define USER_ARGS_N 5
-# define QUIT_ARGS_N 2
+#  define PASS_ARGS_N 2
+#  define NICK_ARGS_N 2
+#  define USER_ARGS_N 5
+#  define QUIT_ARGS_N 1
 
+// messages
+#  define GAME_START "!game"
+#  define GAME_QUIT "!quit"
+#  define CANT_NICK "you cannot change your nickname while in game!"
 #endif

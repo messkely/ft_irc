@@ -5,25 +5,23 @@
 Pass::Pass(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
 {
-	std::cout << "Pass's Parametrized Constructor called\n";
+	// std::cout << "Pass's Parametrized Constructor called\n";
 }
 
 Pass::~Pass()
 {
-	std::cout << "Pass's Destructor called\n";
+	// std::cout << "Pass's Destructor called\n";
 }
 
 void	Pass::parse()
 {
-	client.setHasAuthed(false); // for multiple PASS sent case
-
 	if (argc < PASS_ARGS_N)
 	{
 		rplStr = ERR_NEEDMOREPARAMS(PASS);
 		return ;
 	}
 
-	if (client.getIsAccepted())
+	if (client.getHasAuthed())
 	{
 		rplStr = ERR_ALREADYREGISTRED(PASS);
 		return ;
@@ -43,7 +41,7 @@ void	Pass::execute()
 	// no changes to make for PASS
 }
 
-void	Pass::resp()
+void	Pass::reply()
 {
 	client << rplStr;
 }

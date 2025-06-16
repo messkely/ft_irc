@@ -48,20 +48,8 @@ void Join::parse()
 	std::string channel;
 	while (std::getline(ssChannels, channel, ','))
 	{
-		// if ((channel[0] != '#' && channel[0] != '&' && !channel.empty()) || channel.length() == 1)
-		// {
-		// 	rplStr = ERR_NOSUCHCHANNEL(channel);
-		// 	return;
-		// }
 		if (!channel.empty())
 			channelNames.push_back(channel);
-	}
-
-	// check channels
-	if (channelNames.size() > 9)
-	{
-		rplStr = ERR_TOOMANYCHANNELS(client.getNickname());
-		return;
 	}
 
 	// split keys
@@ -84,7 +72,7 @@ void Join::execute()
 	// JOIN 0: part all channels
 	if (channelNames.size() == 1 && channelNames[0] == "0")
 	{
-		server.leaveAllChannels(client.getSockfd());
+		server.clearClientHistory(client.getSockfd());
 		return;
 	}
 
@@ -111,7 +99,7 @@ void Join::execute()
 			std::string joinMsg = RPL_JOIN(client.getPrefix(), name);
 			rplStr += joinMsg;
 			ch->broadcast(client, joinMsg);
-			rplStr += RPL_NOTOPIC(ch->getName());
+			rplStr += RPL_NOTOPIC(ch->getName(), client.getNickname());
 
 			// 2) names list
 			rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
@@ -119,8 +107,12 @@ void Join::execute()
 			continue;
 		}
 
+		// already in channel?
+		if (ch->hasUser(client))
+			continue;
+	
 		// key check
-		if (!ch->getPassword().empty() && !client.getIsInvited())
+		if (!ch->getPassword().empty())
 		{
 			if ((!ch->getPassword().empty() && key.empty()) || (!key.empty() && key != ch->getPassword()))
 			{
@@ -129,12 +121,8 @@ void Join::execute()
 			}
 		}
 
-		// already in channel?
-		if (ch->hasUser(client))
-			continue;
-
 		// invite-only?
-		if (ch->isInviteOnly() && !client.getIsInvited())
+		if (ch->isInviteOnly() && !ch->isInvited(client))
 		{
 			rplStr += ERR_INVITEONLYCHAN(client.getNickname(), name);
 			continue;
@@ -163,13 +151,13 @@ void Join::execute()
 		rplStr += joinMsg;
 		ch->broadcast(client, joinMsg);
 		// 2) names list
-		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(name) : rplStr += RPL_TOPIC(client.getNickname(), ch->getName(), ch->getTopic());
+		(ch->getTopic().empty()) ? rplStr += RPL_NOTOPIC(name, client.getNickname()) : rplStr += RPL_TOPIC(client.getPrefix(), ch->getName(), ch->getTopic(), client.getNickname());
 		rplStr += RPL_NAMREPLY(client.getNickname(), name, ch->getUserListStr());
 		rplStr += RPL_ENDOFNAMES(client.getNickname(), name);
 	}
 }
 
-void Join::resp()
+void Join::reply()
 {
 	client << rplStr;
 }

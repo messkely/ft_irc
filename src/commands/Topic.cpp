@@ -31,11 +31,6 @@ void Topic::parse()
 	}
 	
 	channelName = args[1];
-	if ((channelName[0] != '#' && channelName[0] != '&') || channelName.length() <= 1)
-	{
-		rplStr = ERR_NOSUCHCHANNEL(channelName);
-		return;
-	}
 
 	for (int i = 2; i < argc; ++i)
 	{
@@ -72,13 +67,13 @@ void Topic::execute()
 	}
 
 	// get the topic
-	if (topic.empty() && (!chan->isTopicLocked() || chan->isOp(client)))
+	if (topic.empty())
 	{
 		currentTopic = chan->getTopic();
 		if (!currentTopic.empty())
-			rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), currentTopic);
+			rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), currentTopic, client.getNickname());
 		else
-			rplStr += RPL_NOTOPIC(chan->getName());
+			rplStr += RPL_NOTOPIC(chan->getName(), client.getNickname());
 		return;
 	}
 	// change the Topic (or clear).
@@ -89,12 +84,11 @@ void Topic::execute()
 	}
 
 	chan->setTopic((topic[0] == ':' && topic.length() == 1) ? "" : topic);
-	// rplStr += "Hey everyone, your attention please\r\n";
-	rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), chan->getTopic());
+	rplStr += RPL_TOPIC(client.getPrefix(), chan->getName(), chan->getTopic(), client.getNickname());
 	return;
 }
 
-void Topic::resp()
+void Topic::reply()
 {
 	client << rplStr;
 }

@@ -1,2 +1,3 @@
-added tests for PART
-added default PART message (client nickname)
+performed eval like tests
+removed all logging from the Server
+restored support for IPV6

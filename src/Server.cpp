@@ -15,7 +15,7 @@ using namespace std;
 Server::Server(const char *port, const char *passwd)
 	: servSock(getServSock(port)), passwd(passwd)
 {
-	std::cout << "Server's Parametrized Constructor called\n";
+	// std::cout << "Server's Parametrized Constructor called\n";
 
 	string	tmpCmdNames[CMDS_N] = {PASS, NICK, USER, JOIN, MODE, PART, TOPIC, KICK, QUIT, PRIVMSG, INVITE}; // add command names here
 
@@ -31,7 +31,7 @@ Server::Server(const char *port, const char *passwd)
 
 Server::~Server() 
 {
-	std::cout << "Server's Destructor called\n";
+	// std::cout << "Server's Destructor called\n";
 
 	close(servSock);
 }
@@ -52,7 +52,7 @@ void    Server::launch()
 		{
 			if (lst[i].revents & POLLIN || lst[i].revents & POLLOUT || lst[i].revents & POLLERR)
 			{
-				handleReadyFd(lst[i]);
+				handleReadyFd(lst[i].fd, lst[i].revents);
 				fdsHandled++;
 			}
 
@@ -72,13 +72,13 @@ bool	Server::isNicknameTaken(string nickname)
 	return (getClientByNickname(nickname).getNickname() == nickname);
 }
 
-// returns matching client if present; the last client if not
+// returns matching client if present; the placeholder client otherwise
 Client	&Server::getClientByNickname(string nickname)
 {
 	return (clients.getClientByNickname(nickname));
 }
 
-// returns matching client if present; the last client if not
+// returns matching client if present; the placeholder client otherwise
 Client	&Server::getClientByFd(int fd)
 {
 	return (clients.getClientByFd(fd));
@@ -119,22 +119,23 @@ void Server::removeChannel(const std::string& name)
 	}
 }
 
-std::vector<Channel*>& Server::getChannels()
-{
-    return (channels);
-}
-
-void Server::leaveAllChannels(int fd)
+// leave all channels
+// leave all invite lists
+// leave bot game
+void Server::clearClientHistory(int fd)
 {
 	Client	&client = clients.getClientByFd(fd);
-	std::vector<Channel *> &allChans = getChannels();
 
-    for (size_t idx = 0; idx < allChans.size(); ++idx)
+    for (size_t idx = 0; idx < channels.size(); ++idx)
     {
-        Channel *ch = allChans[idx];
+		Channel *ch = channels[idx];
+		// leave as an invited memeber
+		if (ch->isInvited(client))
+			ch->inviteListRemove(client);
+		// leave as a member
         if (ch->hasUser(client))
         {
-            std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
+			std::string partMsg = RPL_PART(client.getPrefix(), ch->getName(), (std::string) "");
             ch->broadcast(client, partMsg);
             ch->removeUser(client);
 			if (ch->getClientCount() < 1)
@@ -144,25 +145,26 @@ void Server::leaveAllChannels(int fd)
 			}
         }
     }
-
-    return;
+	// notify bot about leaving
+	if (client.getIsInGame() && isNicknameTaken(BOT))
+		getClientByNickname(BOT) << RPL_PRIVMSG(client.getPrefix(), BOT, GAME_QUIT);
 }
 
-
-// listen to all sockets, for recv ready
+// listen to all sockets, for recv ready (except when client is rejected or closed connection)
 // and only to those with non empty client replies buf, for send ready
-void	Server::listenForEvents(const vector <pollfd> &lst)
+void	Server::listenForEvents(const vector<pollfd> &lst)
 {
-	int	fd;
+	int		fd;
 
 	for (size_t i = 0; i < lst.size(); i++)
 	{
 		fd = lst[i].fd;
+		Client	&client = getClientByFd(fd);
 
-		if (fd == servSock || !getClientByFd(fd).readyToSend())
-			monitor.setEvents(fd, POLLIN);
-		else if (getClientByFd(fd).readyToSend() && getClientByFd(fd).getIsRejected())
+		if (client.getIsRemoteClosed() || client.getIsRejected())
 			monitor.setEvents(fd, POLLOUT);
+		else if (fd == servSock || !client.readyToSend())
+			monitor.setEvents(fd, POLLIN);
 		else
 			monitor.setEvents(fd, POLLIN | POLLOUT);
 	}
@@ -174,12 +176,12 @@ static std::string	getIpStr(sockaddr_storage *addr) // restore IPV6 support late
 {
 	char	*ipStr = NULL;
 
-	// if (addr->ss_family == AF_INET6)
-	// {
-	// 	sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
+	if (addr->ss_family == AF_INET6)
+	{
+		sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
 		
-	// 	return (inet_ntoa6(&ipv6->sin6_addr));
-	// }
+		return (inet_ntoa6(&ipv6->sin6_addr));
+	}
 
 	if (addr->ss_family == AF_INET)
 	{
@@ -214,7 +216,7 @@ void	Server::closeCnt(const Client &client)
 	int	fd = client.getSockfd();
 
 	monitor.remove(fd);
-	leaveAllChannels(fd);
+	clearClientHistory(fd);
 	clients.remove(fd);
 }
 
@@ -222,13 +224,10 @@ void	Server::handleClientInReady(Client &client)
 {
 	int closed = !(client.recvMessages());
 
-	if (closed) // connection closed
-	{
-		closeCnt(client);
-		return ;
-	}
+	if (closed) // remote side closing connection
+		client.setIsRemoteClosed(true);
 
-	procCmds(client);
+	procMessages(client);
 }
 
 void	Server::handleClientOutReady(Client &client)
@@ -237,27 +236,27 @@ void	Server::handleClientOutReady(Client &client)
 		client.sendReplies();
 }
 
-void	Server::handleReadyFd(const pollfd &pfd)
+void	Server::handleReadyFd(int fd, short revents)
 {
-	Client	&client = clients.getClientByFd(pfd.fd);
+	Client	&client = clients.getClientByFd(fd);
 
-	if (pfd.revents & POLLOUT)
+	if (revents & POLLOUT)
 	{
 		handleClientOutReady(client);
 		// close after rplBuf flush
-		if (client.getIsRejected())
+		if (client.getIsRemoteClosed() || client.getIsRejected())
 			closeCnt(client);
 	}
 
-	if (pfd.revents & POLLIN)
+	if (revents & POLLIN)
 	{
-		if (pfd.fd == servSock)
+		if (fd == servSock)
 			acceptCnt();
 		else
 			handleClientInReady(client);
 	}
 
-	if (pfd.revents & POLLERR)
+	if (revents & POLLERR)
 		closeCnt(client);
 }
 
@@ -265,20 +264,27 @@ void	Server::handleReadyFd(const pollfd &pfd)
 // ;false otherwise
 static bool	isCommandDropped(Client &client, string cmdName)
 {
-	if (cmdName != PASS && !client.getIsAccepted() && !client.getHasAuthed())
+	if (client.getIsRejected())
+		return (true);
+
+	if (cmdName != PASS && !client.getHasAuthed())
 	{
 		client << ERR_CLIENTREJECTED();
 		client.setIsRejected(true);
+		client.setIsRemoteClosed(true);
 		return (true);
 	}
 
-	if (cmdName != PASS && !client.getIsAccepted())
-		client.setIsAccepted(true);
-
 	if (cmdName != PASS && cmdName != USER && cmdName != NICK
-		&& !client.isRegistered())
+		&& cmdName != QUIT && !client.isRegistered())
 	{
 		client << ERR_NOTREGISTERED(cmdName);
+		return (true);
+	}
+
+	if (cmdName == NICK && client.getIsInGame())
+	{
+		client << RPL_MSG(client.getNickname(), CANT_NICK);
 		return (true);
 	}
 
@@ -294,25 +300,32 @@ void	Server::runCommandLifeCycle(cmdCreator &creator, string &msg, Client &clien
 
 	cmd->parse();
 	cmd->execute();
-	cmd->resp();
+	cmd->reply();
 
 	delete cmd;
 }
 
 static void	handleUnknownCommand(Client &client, string msg)
 {
-	char	**args = splitMsg(msg.c_str(), SPACE);
+	char	**args;
+
+	if (client.getIsRejected())
+		return ;
+
+	args = splitMsg(msg.c_str(), SPACE);
 
 	client << ERR_UNKNOWNCOMMAND(client.getNickname(), args[0]);
+
+	freeMsgArgs(args);
 }
 
 // process messages (i.e CRLF terminated lines) stored in client buffer
-void	Server::procCmds(Client &client)
+void	Server::procMessages(Client &client)
 {
 	string		msg;
 	int			i;
 
-	cerr << (client >> msg) << endl;
+	client >> msg;
 
 	while (!msg.empty())
 	{

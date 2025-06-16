@@ -1,12 +1,10 @@
 # success indicates the server responds adequatly to message [ makes changes / sends replies]
-# failure indicates the server failes to respond adequetly to message [ no changes / makes incomplete changes / does not reply / missing replies]
+# failure indicates the server failes to respond adequetly to message [ no changes / makes incomplete changes / does not reply / missing some replies]
 # if message placed in failure, a list of reasons must be supplied
 # the ; separator means the test requires more than a message
 # n(num) indicates a different client
-# JOIN rule: ( <channel> *( "," <channel> ) [ <key> *( "," <key> ) ] ) / "0"
 
 % JOIN
-
 	- PERFORMED TESTS
 		! 	SUCCESS
 			JOIN
@@ -16,11 +14,13 @@
 			JOIN pele
 			JOIN #pele ; JOIN #pele
 			n1 JOIN #pele ; n1 ctrl+c ; n2 JOIN #pele [n2 made operator]
+			n1 JOIN #pele ; n1 QUIT leaving ; n2 JOIN #pele [n2 made operator]
 			n1 JOIN #pele ; n2 JOIN #pele ; n1 ctrl+c [n2 made operator]
 			n1 JOIN #pele ; n2 JOIN #plato ; n2 JOIN #pele ; n1 JOIN #plato ; n1 ctrl+c [n2 made operator for #pele]
 			n1 JOIN #pele/plato ; n2 JOIN #pele/plato ; n1 ctrl+c ; n2 ctrl+c ; n3 JOIN #pele/plato [n3 made operator for #pele/plato]
 			n1 JOIN #pele/plato ; n2 JOIN #pele/plato ; n3 JOIN #pele/plato ; n1/n2 ctrl+c ; [n3 made operator for #pele/plato]
 			n1 JOIN #pele,#plato ; n2 JOIN #pele,#plato ; n1 JOIN 0 [n2 made operator for #pele,#plato] ; n2 JOIN 0 [channels removed]
+			n1 JOIN #pele,#plato ; n2 JOIN #pele,#plato ; n1 QUIT [n2 made operator for #pele,#plato] ; n2 QUIT [channels removed]
 			n1 JOIN #pele ; n2 PART #pele
 			JOIN # plato
 			JOIN                    #plato
@@ -36,6 +36,37 @@
 			JOIN #pele key k k k
 			JOIN 0 0 0 0
 			JOIN #pele,pele,#
+
+			## invite-only related tests
+			n1 JOIN #pele ; n1 MODE #pele +i ; n2 JOIN #pele [invite only]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #plato ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #pele ; n2 PART #pele ; n2 JOIN #pele [invitation needed]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 JOIN #pele ; n1 MODE #pele -i ; n2 PART #pele ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n1 MODE #pele -i ; n1 MODE #pele +i ; n2 JOIN #pele [invitation needed]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n1 MODE #pele -i ; n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 JOIN #plato ; n1 MODE #plato +i ; n2 JOIN #pele,#plato,#pear [n2 joined]
+			n1 JOIN #pele ; n1 MODE #pele +i ; n1 INVITE n2 ; n2 ctrl+c [n2 removed from #pele invite list]
+
+			## member-limit related tests
+			n1 JOIN #pele ; n1 MODE #pele +l 1 : n2 JOIN #pele [cannot join +l]
+			n1 JOIN #pele ; n1 MODE #pele +l 0 : n2 JOIN #pele [n2 joined]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +l 1 ; n2 PART #pele; n2 JOIN #pele [cannot join +l]
+
+			## channel-key related tests
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele letMeIn [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele letMeIn,pass [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele ,,,,,,, [bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 JOIN #plato ; n1 MODE #plato +k pass ; n2 JOIN #pele,#plato pass [two key needed]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n2 JOIN #pele pass ; n1 MODE #pele +k newPass ; n2 JOIN #pele pass [n2 remains on chan]
+			n1 JOIN #pele ; n1 MODE #pele +k pele ; n1 JOIN #pepe ; n1 MODE #pepe +k pepe ; n2 JOIN #pepe,#pele,#pepe,#pele wrong,wrong,pepe,pele [n2 joins #pele/pepe]
+			n1 JOIN #pele ; n1 MODE #pele +k pele ; n1 JOIN #pepe ; n1 MODE #pepe +k pepe ; n2 JOIN #pepe,#pele,#pepe,#pele wrong,pele,pepe,wrong [n2 joins #pele/pepe]
+
+			## combined modes related tests
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 MODE #pele +i ; n2 JOIN #pele pass [rejected: invite only]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 MODE #pele +i ; n1 INVITE n2 #pele ; n2 JOIN #pele [rejected: bad key]
+			n1 JOIN #pele ; n1 MODE #pele +k pass ; n1 MODE #pele +i ; n1 INVITE n2 #pele ; n2 JOIN #pele wrong ; n2 JOIN #pele pass [n2 joined]
 
 		!!	FAILURE
 			n1 JOIN #pele ; n1 MODE #pele [missing RPL_CHANNELMODEIS (causes ERR_NEEDMOREPARAMS)]
@@ -56,41 +87,258 @@
 			n1 JOIN #pandora ; n1 PART #pandora leaving right now
 			n1 JOIN #pandora ; n1 PART #pandora :leaving right now
 			PART #pele \n\\\\\\\ ,.,.,. [[[]]]] \\\r\"\t\\n
-
-		!!	FAILURE
+			JOIN #pele ; PART ,,,,,,,,,,,,#pele,,,,,,,,,
+			JOIN #pele ; PART ,,,,,,,,,,,,,,#pele,,,,,,,,,,,,#pele
+			PART ,,,,,,,,,,,,
+			n1 JOIN #plato,#pele,#pandora ; n2 JOIN #plato,#pele,#pandora ; n1 PART #pele,#plato,#pandora :leaving forever [n2 made operator + message inclusive reply]
+			n1 JOIN #plato,#pele,#pandora ; n1 PART #pele,#plato,#pandora leaving forever [channels removed]
+			n1 JOIN #pele,#plato ; n2 JOIN #pele ; n2 PART #plato,#plato [leaves #pele + not on chan: #plato + message inclusive rpl]
+			PART #,#,,,,,,,,,
 			n1 JOIN #pandora ; n1 PART palace,#,#pandora
+		!!	FAILURE
 		#limechat
 			PART #plato,:,#pele
 % TOPIC
-
+	# if the channel has the t flag set, only operators of that channel can
+	# use TOPIC to set that channel's topic, regular members may still query the topic
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			JOIN #pele ; TOPIC #pele [not set]
+			TOPIC #
+			TOPIC
+			TOPIC l a a a a
+			TOPIC ,,,,,,,
+			n1 JOIN #pele ; n1 TOPIC #pele hello bug ; n2 JOIN #pele
+			TOPIC #plato [no such chan]
+			n1 JOIN #pele ; n1 TOPIC #pele hello bug ; n2 TOPIC #pele
+			TOPIC #pele,
+			TOPIC #pele :
+			TOPIC #pele :la vie en rose
+			TOPIC #pele :la vie en rose ::::
+			n1 JOIN #plato ; n2 TOPIC #plato
+			n1 JOIN #plato ; n2 TOPIC #plato :not my buisness
+			n1 JOIN #pele ; n1 MODE #pele +t ; n2 JOIN #pele ; n2 TOPIC #pele coco [not operator]
+			n1 JOIN #pele ; n1 MODE #pele +t ; n2 JOIN #pele ; n1 TOPIC #pele coco [topic updated]
+			n1 JOIN #pele ; n1 MODE #pele -t ; n2 JOIN #pele ; n2 TOPIC #pele coco [topic updated]
+			n1 JOIN #pele ; n1 MODE #pele +t ; n2 JOIN #pele : n1 MODE #pele +o n2 ; n2 TOPIC #pele setNewTopic [topic updated]
+
 		!!	FAILURE
+		#limechat
 			TOPIC :
 % INVITE
-
+	# when a channel is invite only, only oprators can issue INVITE commands, and only invited users can join
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			INVITE
+			INVITE jk jk jk jk
+			INVITE mark
+			INVITE mark #pele [no such nick]
+			INVITE mark # [no such chan]
+			INVITE mark : [no such chan]
+			n1 NICK mark; n2 INVITE mark #pele [no such channel]
+			n1 JOIN #pele ; n2 NICK mark ; n2 INVITE mark #pele [ur not on chan]
+			n1 NICK jack ; n1 JOIN #pele ; n2 INVITE jack #pele [ur not on chan]
+			n1 NICK jack ; n1 JOIN #pele ; n2 NICK mark ; n1 INVITE mark #pele [n2 invited]
+			n1 JOIN #pele ; n2 NICK mark ; n3 NICK jack ; n1 INVITE mark #pele ; n1 INVITE jack #pele [n2/n3 invited]
+			n1 JOIN #pele ; n2 NICK jack ;n2 JOIN #pele ;  n1 INVITE jack [already on chan]
+			n1 JOIN #pele ; n2 JOIN #pele ; n3 NICK jack ; n2 INVITE jack #pele
 		!!	FAILURE
-			
+		#limechat
+			how does the invite message appear on reciever's interface
 % MODE
-
+	# a MODE query is only visible to the memebers of the channel
+	# a MODE query exposes: the limit set, the channel key
+	# perhaps the format of the MODE query is as follows: +flag valueIfThere
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			MODE
+			MODE #
+			MODE 123
+			MODE \t lemon
+			JOIN #pele ; MODE #pele lemon
+			JOIN #pele ; MODE #pele +kali goku
+			n1 JOIN #pele ; n1 MODE pele +
+			n1 JOIN #pele ; n1 MODE pele +-
+			n1 JOIN #pele ; n1 MODE pele +--------+-+---++++-
+			n1 JOIN #pele ; n1 MODE pele +--------+-+---++++-arm
+			n1 MODE #pele [no such chan]
+			n1 JOIN #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n1 MODE #pele +k key ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +k key ; n2 MODE #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele -/+t arg arg arg ; n2 MODE #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele -/+i arg arg arg ; n2 MODE #pele ; n1 MODE #pele
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +k key key1 key2 key3 ; n2 MODE #pele [takes first]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +o n n1 n2 n3 ; n2 MODE #pele [takes first]
+			n1 JOIN #pele ; n2 JOIN #pele ; n1 MODE #pele +l 1 2 19 0 1 goku ; n2 MODE #pele [takes first]
+			n1 JOIN #pele ; n1 MODE #pele +l [ERR_NEEDMOREPARAMS]
+			n1 JOIN #pele ; n1 MODE #pele +---++---+l 12 ; n2 JOIN #pele ; n2 MODE #pele [last sign]
+			n1 JOIN #pele ; n1 MODE #pele +---++---+k key ; n2 JOIN #pele ; n2 MODE #pele [last sign]
+			n1 JOIN #pele ; n1 MODE #pele +-+++++--++++++t ; n2 JOIN #pele ; n2 MODE #pele
+			n1 JOIN #pele ; n1 MODE #pele +--++++++++-+++i ; n2 JOIN #pele ; n2 MODE #pele
+			n1 JOIN #pele ; n1 MODE #pele +-+-++kk key1 key2 ; n2 JOIN #pele ; n2 MODE #pele [chan pass set to key2 (latest key)]
+			n1 JOIN #pele ; n1 MODE #pele +--++lll 1 2 10 ; n2 JOIN #pele ; n2 MODE #pele [chan limit set to 10 (latest val)]
+			n1 JOIN #pele ; n1 MODE #pele ++++--it; n2 JOIN #pele ; n2 MODE #pele [both flags unset]
+			n1 JOIN #pele ; n1 MODE #pele +it; n2 JOIN #pele ; n2 MODE #pele [both flags set]
+			MODE #pele +l 0 ; MODE #pele [l flag unset]
+			MODE #pele +lllkk 13 12 1 key1 key2 [latest val: k key2, l 1]
+			MODE #pele +itkkk key1 key2 555 [latest val: k 555 + it set]
+			MODE #pele +itllkkllkkit 13 12 key1 key2 11 10 key3 key4 [#pele +klit key4 10]
+			MODE #pele +klllk key1 -1 avatar 7 key2 [#pele +kl key2 7]
+			MODE #pele +ititititkkkllkl arm arm2 arm3 -11 avatar mykey notRight xtra xtra xtra [#pele +kit mykey]
+			MODE #pele ---it+++klk key1 0 key [+k key]
+			MODE #pele +llkkiittlkv a a a a 1 tko [invalid mode param]
+			MODE #pele -l [flag unset]
+			MODE #pele -k [flag unset]
+			MODE #pele -kllkklklklkk [flags kl unset]
+			MODE #pele -kllkklklklkkiitt [klit flags unset]
+			MODE #pele -k [flag unset]
+			MODE #pele -i [flag unset]
+			MODE #pele +k [k set to empty val]
+			MODE #pele +l [l set to 0]
+			MODE #pele +klit key1 5 ; MODE #pele +kl-it [klit flags unset]
+			MODE #pele +o ahmed [no such nick]
+			NICK baron ; MODE #pele +klito key1 99 baron
+			NICK baron ; MODE #pele +klito key1 99 baron xtra xtra xtra
+
 		!!	FAILURE
-			
+
 % PRIVMSG
 
 	- PERFORMED TESTS
 		! 	SUCCESS
-			
+			PRIVMSG
+			PRIVMSG #pele [not enough params]
+			PRIVMSG bale hi [no such nick/chan]
+			PRIVMSG bale hi [no such nick/chan]
+			PRIVMSG bale hi guys good to see you [no such nick/chan]
+			NICK jack ; PRIVMSG jack hi me
+			PRIVMSG # hi guru [no such chan]
+			n2 NICK kim ; PRIVMSG kim #pele GOING BACK TO ITALY
+			n2 NICK kim ; PRIVMSG kim :GOING BACK TO ITALY
+			n2 NICK kim ; PRIVMSG kim :::GOING BACK TO ITALY
+			n2 NICK kim ; PRIVMSG kim :::GOING BACK TO ITALY
+			PRIVMSG #going home
+			n1 JOIN #pele ; PRIVMSG #pele anyone guys?
+			n1 JOIN #pele ; n2 JOIN #pele ; PRIVMSG #pele hello guys
+			n1 JOIN #pele ; n2 JOIN #plato ; n1 PRIVMSG #pele,#plato hey guys [#plato not on chan]
+			n1 JOIN #pele ; n2 JOIN #plato ; n1 JOIN #plato ; n1 PRIVMSG #pele,#plato anyone? [delivered to #pele,#plato]
 		!!	FAILURE
-			
+
 % KICK
+	- PERFORMED TESTS
+		! 	SUCCESS
+		KICK
+		KICK arg
+		KICK arg :naughty
+		KICK # name
+		KICK # name :naughty
+		KICK # name naughty naughty
+		KICK #plato name
+		KICK #plato name :naughty
+		KICK #plato name naughty
+		KICK #plato name naughty naughty
+		JOIN #pele ; KICK #pele
+		KICK #pele :hola amongus [USERNOTINCHAN]
+		JOIN #pele ; KICK #pele wrongNick [USERNOTINCHAN]
+		JOIN #pele ; KICK #pele wrongNick à balè à bala [USERNOTINCHAN]
+		n1 JOIN #pele ; n2 NICK l ; n1 KICK #pele l [USERNOTINCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 [NOTONCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 :going home [NOTONCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 going home [NOTONCHAN]
+		n2 JOIN #plato ; n1 KICK #plato n2 :going home [NOTONCHAN]
+		n1 JOIN #pele ; n1 KICK #pele,#pele,#pele [NOTENOUGHARGS]
+		n1 JOIN #pele ; n1 KICK #pele key,peele,key1,peele1
+		n1 JOIN #pele ; n1 KICK #pele,#pele key,peele
+		n1 JOIN #pele ; n1 KICK #pele,#pele key1,k2,kei [SYNTAXERR]
+		n1 JOIN #pele ; n1 KICK #pele,#pele key1 [SYNTAXERR]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato a,a [#plato NOTONCHAN, #pele USERNOTINCHAN]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato,# a,a,a, [#plato NOTONCHAN, #pele USERNOTINCHAN, # NOSUCHCHAN]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,plato,#plato,,,, a,a,a,,,, [[#plato NOTONCHAN, plato NOSUCHCHAN, #pele USERNOTINCHAN]]
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato,#,#,#,#,# ie,a,a,a,a,a,a
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato,,,,,,,,$ Al,AL,AL
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato a,a,,,,,, going home
+		n1 JOIN #pele ; n2 JOIN #plato ; n1 KICK #pele,#plato a,a,,,,,,, going home going home
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n1 KICK #,plato,#pele,#plato,,,,,,, ,,,, [SYNTAXERR]
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n1 KICK #,plato,#pele,#plato,,,,,,, n2,n2,n2,n2,,,,,, goodbye son [# NOSUCHCHAN, plato NOSUCHCHAN, #pele n2 kicked, #plato NOTONCHAN]
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n2 KICK #pele l hahaha [NOTOPERATOR]
+		n1 JOIN #pele ; n2 JOIN #plato,#pele ; n2 KICK #pele,#plato,#nochan,# n1,n1,n1,n1 [#pele NOTOPERATOR, #plato USERNOTINCHAN, #nochan NOSUCHCHAN, # NOSUCHCHAN]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 [n1 kicked from #pele]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 going home [n1 kicked from #pele with message]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 :going home [n1 kicked from #pele with message]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1,n1,n1,n1,n1,n1 :going home [n1 kicked from #pele with message, USERNOTINCHAN, *(USERNOTINCHAN)]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 [n2 made op]
+		n1 JOIN #pele ; n2 JOIN #pele ; n1 KICK #pele n1 ; n1 KICK #pele n1 [channel removed]
+		!!	FAILURE
+
+% QUIT
 
 	- PERFORMED TESTS
 		! 	SUCCESS
+		QUIT
+		QUIT goodbye
+		QUIT goodbye, see you tomorrow
 		!!	FAILURE
+
+% server issues revealed while testing
+	server not closing immediately after a valid command has been sent before authentication (linux only)
+
+% server todos
+	...
+% NC RELATED
+	while true; do nc 0 4950 < instructions &; sleep 1; kill $(pgrep nc); done
+	nc << del
+		NICK al
+		del
+	nc << del
+		PASS
+		PASS wrong
+		PASS mypass
+		NICK al
+		JOIN #pele
+		JOIN 0
+	nc << del
+		PRIVMSG
+		NICK
+		WRONGCMD
+		JOIN #pele
+	nc << del
+		PASS wrong
+		NICK al
+		USER i i i i
+		JOIN #pele
+	nc << del
+		PASS mypass
+		JOIN #pele
+		NICK al
+		USER i i i i
+		JOIN 0
+	nc << del
+		PRIVMSG
+		MODE
+		PASS mypass
+		USER k k k k
+		NICK al
+		JOIN #pele
+	nc << del
+		WRONGCMD
+		CGI
+		PHP
+		NICK
+		CGI
+		JOIN #pele
+	nc << del
+		PASS mypass
+		PASS mypass
+		NICK al
+		USER i i i i
+		USER i i i i
+		MODE #pele +i
+		JOIN #pele
+		KICK l #pele
+	nc << del
+		PASS mypass
+		QUIT going home
+		NICK al
+		USER i i i i
+		JOIN #pele
+	< infile | nc (writing the different here_doc tests to infile would result in the same behavior)

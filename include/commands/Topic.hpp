@@ -28,7 +28,7 @@ class Topic : public ACommand
 
 		virtual void parse();
 		virtual void execute();
-		virtual void resp();
+		virtual void reply();
 
 		static ACommand	*create(Server &server, Client &client, char **args, int argc);
 };

@@ -5,12 +5,12 @@
 Nick::Nick(Server &server, Client &client, char **args, int argc)
 	: ACommand(server, client, args, argc)
 {
-	std::cout << "Nick's Paramterized Constructor called\n";
+	// std::cout << "Nick's Paramterized Constructor called\n";
 }
 
 Nick::~Nick() 
 {
-	std::cout << "Nick's Destructor called\n";
+	// std::cout << "Nick's Destructor called\n";
 }
 
 void	Nick::parse()
@@ -51,12 +51,12 @@ void	Nick::execute()
 		return ;
 
 	if (!client.getUsername().empty() && client.getNickname().empty())
-		rplStr = RPL_WELCOME(args[1], client.getUsername(), client.getHostname());
+		rplStr = RPL_WELCOME(std::string(args[1]), client.getUsername(), client.getHostname());
 
 	client.setNickname(args[1]);
 }
 
-void	Nick::resp()
+void	Nick::reply()
 {
 	client << rplStr;
 }
