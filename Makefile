@@ -11,8 +11,7 @@ HEADERS			= include/Server.hpp include/Client.hpp include/ClientList.hpp include
 				  include/commands/Topic.hpp include/commands/Kick.hpp include/commands/Mode.hpp				\
 				  include/commands/Quit.hpp include/commands/Privmsg.hpp include/commands/Invite.hpp
 
-# restore src/utils/inet_ntoa6.cpp later
-SRCS			= src/main.cpp src/utils/msgUtils.cpp src/utils/servSockGen.cpp		\
+SRCS			= src/main.cpp src/utils/msgUtils.cpp src/utils/servSockGen.cpp src/utils/inet_ntoa6.cpp		\
 				  src/utils/userInpParse.cpp src/utils/error.cpp src/utils/stringUtils.cpp src/Monitor.cpp		\
 				  src/Server.cpp src/Client.cpp src/ClientList.cpp src/Channel.cpp src/commands/ACommand.cpp	\
 				  src/commands/Pass.cpp src/commands/Nick.cpp src/commands/User.cpp src/commands/Join.cpp		\

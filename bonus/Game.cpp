@@ -53,8 +53,6 @@ void Game::displayInventory(ClientMetadata &client, const char *playerAnswer)
 {
 	std::string result;
 
-	std::cerr << client.game.answer << std::endl;
-
 	const char *answer = client.game.answer.c_str();
 	size_t len = std::strlen(answer);
 	for (size_t i = 0; i < len; ++i)

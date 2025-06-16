@@ -176,12 +176,12 @@ static std::string	getIpStr(sockaddr_storage *addr) // restore IPV6 support late
 {
 	char	*ipStr = NULL;
 
-	// if (addr->ss_family == AF_INET6)
-	// {
-	// 	sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
+	if (addr->ss_family == AF_INET6)
+	{
+		sockaddr_in6	*ipv6 = (sockaddr_in6 *)addr;
 		
-	// 	return (inet_ntoa6(&ipv6->sin6_addr));
-	// }
+		return (inet_ntoa6(&ipv6->sin6_addr));
+	}
 
 	if (addr->ss_family == AF_INET)
 	{
@@ -325,7 +325,7 @@ void	Server::procMessages(Client &client)
 	string		msg;
 	int			i;
 
-	cerr << (client >> msg) << endl;
+	client >> msg;
 
 	while (!msg.empty())
 	{
@@ -343,6 +343,6 @@ void	Server::procMessages(Client &client)
 		if (i == CMDS_N)
 			handleUnknownCommand(client, msg);
 
-		cerr << (client >> msg) << endl;
+		client >> msg;
 	}
 }

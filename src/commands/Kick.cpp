@@ -55,7 +55,6 @@ void Kick::parse()
 	{
 		reason.clear();
 
-		std::cerr << "content of Kick::reason " << reason << std::endl;
 		for (int i = 3; i < argc; ++i)
 		{
 			reason += args[i];
@@ -63,7 +62,6 @@ void Kick::parse()
 		}
 		if (!reason.empty() && reason[0] == COLON)
 			reason.erase(0, 1);
-		std::cerr << "content of Kick::reason " << reason << std::endl;
 	}
 }
 
