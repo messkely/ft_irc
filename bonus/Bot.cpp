@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-Bot::Bot(const std::string &hostname, int port, const std::string &nick, const std::string &username, const std::string &password)
+Bot::Bot(const std::string &hostname, const char *port, const std::string &nick, const std::string &username, const std::string &password)
 	: sockfd(createSocket(hostname.c_str(), port)), nick(nick), username(username), hostname(hostname),
 	  password(password), game(new Game()) {}
 
@@ -26,21 +26,24 @@ Bot::~Bot()
 	delete game;
 }
 
-int Bot::createSocket(const char *host, int port)
+int Bot::createSocket(const char *host, const char *port)
 {
-    struct hostent *server = gethostbyname(host);
-    if (!server)
-    {
-        std::cerr << "ERROR, no such host\n";
-        exit(1);
-    }
+	int			gai_status;
+	addrinfo	hints, *res = NULL;
 
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
-    serv_addr.sin_addr = *(struct in_addr *)server->h_addr;
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0 || connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	memset(&hints, 0, sizeof(hints));
+
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if ((gai_status = getaddrinfo(host, port, &hints, &res)))
+	{
+		std::cerr << gai_strerror(gai_status);
+		exit(1);
+	}
+
+    int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sockfd < 0 || connect(sockfd, res->ai_addr, res->ai_addrlen) < 0)
     {
         std::cerr << "ERROR connecting\n";
         exit(1);

@@ -1,3 +1,1 @@
-performed eval like tests
-removed all logging from the Server
-restored support for IPV6
+changed bot socket cration code from the gethostbyname approach to getaddrinfo approach

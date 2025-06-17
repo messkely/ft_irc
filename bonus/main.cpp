@@ -17,11 +17,11 @@
 int main(int ac, char **av)
 {
 	usrInpParse(ac, av);
-	const std::string hostname = av[1];
-	const int port = std::atoi(av[2]);
-	const std::string nick = "bot";
-	const std::string username = "gameBot";
-	const std::string password = av[3];
+	const std::string	hostname = av[1];
+	const char			*port = av[2];
+	const std::string	nick = "bot";
+	const std::string	username = "gameBot";
+	const std::string	password = av[3];
 
 	Bot bot(hostname, port, nick, username, password);
 	bot.run();

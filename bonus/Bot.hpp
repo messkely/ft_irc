@@ -40,12 +40,12 @@ private:
     Game *game;
     std::stringstream rplBuf;
 
-    int createSocket(const char *hostname, int port);
+    int createSocket(const char *hostname, const char *port);
 
 public:
     std::vector<ClientMetadata> ClientData;
 
-    Bot(const std::string &hostname, int port, const std::string &nick, const std::string &username, const std::string &password);
+    Bot(const std::string &hostname, const char *port, const std::string &nick, const std::string &username, const std::string &password);
     ~Bot();
     void run();
     void sendReplies();
