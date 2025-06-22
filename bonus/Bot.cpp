@@ -43,11 +43,16 @@ int Bot::createSocket(const char *host, const char *port)
 	}
 
     int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
     if (sockfd < 0 || connect(sockfd, res->ai_addr, res->ai_addrlen) < 0)
     {
         std::cerr << "ERROR connecting\n";
+		freeaddrinfo(res);
         exit(1);
     }
+
+	freeaddrinfo(res);
+
     return (sockfd);
 }
 
